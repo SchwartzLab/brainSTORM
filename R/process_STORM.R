@@ -1,3 +1,175 @@
+#
+#' STAR alignment
+
+# Wrapper to perform alignment of sequencing reads to a reference genome
+# using STAR (Dobin) and sorting with Samtools.
+alignSTAR <- function(read1Files, STARgenomeDir, zipped = TRUE, nCores = 4,
+                      alignEndsType = "Local", outSAMtype = "BAM Unsorted",
+                      outFilterMultimapNmax = 10, outDir){
+    mkTmpDir()
+    if(!dir.exists(outDir)){dir.create(outDir)}
+    if(zipped){rFCom <- "zcat"}else if(!zipped){rFCom <- "cat"}
+    for(read1F in read1Files){
+        read2F <- gsub(read1F, pattern = "R1", replacement = "R2")
+        if(!file.exists(read2F)){stop(read2F, "does not exist.")}
+        outFPrefix <- strsplit(read1F, split = "/") %>% unlist %>% tail(1) %>%
+            gsub(pattern = "R1.fastq.gz", replacement = "") %>%
+            gsub(read1F, pattern = "R1.fastq", replacement = "")
+        outFPrefix <- file.path(getwd(), "STORMtmp_dir", outFPrefix)
+        com <- paste0("/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",
+                      " --runMode alignReads",
+                      " --runThreadN ", nCores,
+                      " --genomeDir ", STARgenomeDir,
+                      " --readFilesCommand ", rFCom,
+                      " --readFilesIn ", read1F, " ", read2F,
+                      " --outFileNamePrefix ", outFPrefix,
+                      " --outSAMtype ", outSAMtype,
+                      " --outFilterMultimapNmax ", outFilterMultimapNmax,
+                      " --alignEndsType ", alignEndsType)
+        system(com)
+    }
+    # Alignment Summary Report
+    files <- list.files("STORMtmp_dir", full.names = TRUE, pattern = "Log.final$")
+    RES <- list()
+    for (i in files){
+        x <- read.delim(file = i, header = F, sep = "\t", stringsAsFactors = F,
+                        row.names = 1)
+        RES[i] <- x
+    }
+    # Merge in one table
+    summary <- matrix(NA, nrow = nrow(x), ncol = length(files))
+    rownames(summary) <- rownames(x)
+    colnames(summary) <- lapply(read1Files, function(x) {strsplit(x, split = "/") %>% unlist %>% tail(1)}) %>% unlist
+    for (i in files){
+        summary[,i] <- RES[[i]]
+    }
+    outReport <- file.path(outDir, "mappingSummary.txt")
+    if(file.exists(outReport)){ # Add columns to existing summary report
+        tmp <- read.delim(outReport, row.names = 1)
+        write.table(x = cbind(tmp, summary[,-1]), file = outReport,
+                    sep = "\t", quote = F, col.names = NA)
+    }else{
+        write.table(x = summary, file = outReport, sep = "\t", quote = F,
+                    col.names = NA)
+    }
+    # Sort and index with samtools
+    bamFiles <- list.files("STORMtmp_dir", full.names = TRUE, pattern = ".bam$")
+    for(file in bamFiles){
+        system(paste0("/apps/RH7U2/gnu/samtools/1.9/bin/samtools sort -o ",
+                      gsub(file, pattern = ".bam$", replacement = ".sorted.bam"),
+                      " ", file, " -@", nCores))
+        system(paste0("/apps/RH7U2/gnu/samtools/1.9/bin/samtools index ",
+                      gsub(file, pattern = ".bam$", replacement = ".sorted.bam")))
+        system(paste0("rm ", file))
+    }
+    # Remove all garbage
+    garbage <- lapply(c("SJ.out.tab", "Log.progress.out", "Log.out",
+                        "Log.final.out"), function(x){
+                            list.files("STORMtmp_dir", full.names = TRUE,
+                                       pattern = x)}) %>% unlist
+    invisible(file.remove(garbage))
+    # Move files to output dir
+    BAM <- lapply(c("sorted.bam$", "sorted.bam.bai$"), function(x){
+        list.files("STORMtmp_dir", full.names = TRUE, pattern = x)}) %>% unlist
+    for(file in BAM){
+        system(paste("mv", file, outDir))
+    }
+}
+
+
+# STORM object constructor from META table
+storm_STORM <- function(META, fastaGenome = NULL, geneAnnot = NULL, nCores = 1){
+    if(hasDups(META$id)){
+        stop("Not allowed duplicated id variables in META")
+    }
+    DTL <- lapply(META$RDS, function(x) readRDS(x)) # load RDS files
+    # Check if data is in data.table or list format
+    if(all(lapply(DTL, class) %>% unlist %>% equals("data.frame"))){
+        DTL <- lapply(DTL, data.table) %>% set_names(META$id)
+    }else if(all(lapply(DTL, class) %>% unlist %>% equals("list"))){
+        DTL <- lapply(DTL, function(x){
+            do.call(x, what = rbind) %>% data.table()
+        }) %>% set_names(META$id)
+    }
+    # Have reference sequence, if not add it
+    reqRefSeq <- lapply(DTL, function(x){"refSeq" %in% names(x)}) %>% unlist %>% not
+    if(sum(reqRefSeq) > 0 & is.null(fastaGenome) | is.null(geneAnnot)){
+        stop("Data requires reference sequence, fastaGenome and geneAnnot arguments must be provided")
+    }
+    if(sum(reqRefSeq) > 0){
+        DTL[reqRefSeq] <- mclapply(mc.cores = nCores, DTL[reqRefSeq], function(DT){
+            tx_split_DT(DT) %>% lapply(function(x){
+                tx_add_refSeqDT(DT = x, genome = fastaGenome, geneAnnot = geneAnnot)
+            }) %>% tx_merge_DT()
+        })
+    }
+    # Check uniformity of DTs, if unequal equalize
+    tmpPos <- lapply(DTL, function(DT){paste(DT$gene, DT$txcoor, sep = ":")})
+    identCoors <- lapply(tmpPos[-1], function(x){identical(tmpPos[[1]], x)}) %>% unlist %>% all
+    if(!identCoors){
+        if(is.null(geneAnnot) | is.null(fastaGenome)){
+            stop("Data needs compatibility adjustment, this requires geneAnnot and
+                 fastaGenome arguments to be provided")
+        }
+        tmpGenes <- lapply(DTL, function(x) as.character(x$gene)) %>% unlist %>% unique
+        tmpGA <- geneAnnot[match(tmpGenes, geneAnnot$name)]
+        DTL <- lapply(DTL, function(DT){
+            complete_DT(DT, tmpGA, fastaGenome, nCores)
+        })
+    }
+    if(!("pos" %in% names(DTL[[1]]))){
+        DTL <- lapply(DTL, function(x) tx_add_pos(x))
+    }
+    STORM <- list(META = META,
+                  DATA = DTL,
+                  RES  = NULL)
+    return(STORM)
+}
+
+# STORM$SUMMARY table
+storm_summary <- function(STORM){
+    RNAmods <- names(STORM$CALLS[[1]])
+    OUT <- lapply(RNAmods, function(RNAmod_i){
+        tmp_out <- STORM$DATA[[1]][,storm_baseCoorCols, with = FALSE]
+        SETS <- levels(STORM$META$set)
+        if(is.null(STORM$CALLS[[SETS[1]]][[RNAmod_i]]$logist_Score)){
+            warning("logist_Score was not found for ", RNAmod_i, ". Results will",
+                    " not be summarized in STORM$SUMMARY. Check if metrics where ",
+                    "placed in STORM$CALLS[[1]]$", RNAmod_i)
+            return(NULL)
+        }else{
+            tmp_log <- lapply(SETS, function(x){
+                STORM$CALLS[[x]][[RNAmod_i]]$logist_Score
+            }) %>% do.call(what = cbind) %>% set_colnames(paste("logScore",
+                                                                SETS, sep = "_"))
+            tmp_lin <- lapply(SETS, function(x){
+                STORM$CALLS[[x]][[RNAmod_i]]$linear_Score
+            }) %>% do.call(what = cbind) %>% set_colnames(paste("linScore",
+                                                                SETS, sep = "_"))
+            tmp_prd <- lapply(SETS, function(x){
+                STORM$CALLS[[x]][[RNAmod_i]]$pred
+            }) %>% do.call(what = cbind) %>% set_colnames(paste("pred",
+                                                                SETS, sep = "_"))
+            tmp_out <- cbind(tmp_out, tmp_lin, tmp_log, tmp_prd)
+            return(tmp_out)
+        }
+    }) %>% set_names(RNAmods)
+    STORM$SUMMARY <- OUT
+    STORM
+}
+
+
+# Add results to a STORM object. Remove scores if metric is already present.
+hlpr_add_REScols <- function(STORM_RES, REScols){
+    iMetric <- unique(REScols[,"metric"]) %>% as.character()
+    # remove results for identical metric
+    if("metric" %in% names(STORM_RES)){
+        STORM_RES <- STORM_RES[metric != iMetric,]
+    }
+    STORM_RES <- rbind(STORM_RES, REScols)
+    STORM_RES
+}
+
 
 # List files in work dir that match pattern pat
 listFilePatt <- function(pattern, path = "."){
