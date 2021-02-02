@@ -42,3 +42,5 @@ vignettes/*.pdf
 
 # Others
 STORMtmp_dir
+fastq
+bam_Pa
