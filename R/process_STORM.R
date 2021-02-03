@@ -1,6 +1,4 @@
-#
-#' STAR alignment
-
+# STAR alignment
 # Wrapper to perform alignment of sequencing reads to a reference genome
 # using STAR (Dobin) and sorting with Samtools.
 alignSTAR <- function(read1Files, STARgenomeDir, zipped = TRUE, nCores = 4,
@@ -29,31 +27,31 @@ alignSTAR <- function(read1Files, STARgenomeDir, zipped = TRUE, nCores = 4,
         system(com)
     }
     # Alignment Summary Report
-    files <- list.files("STORMtmp_dir", full.names = TRUE, pattern = "Log.final$")
-    RES <- list()
-    for (i in files){
-        x <- read.delim(file = i, header = F, sep = "\t", stringsAsFactors = F,
-                        row.names = 1)
-        RES[i] <- x
-    }
+    rootNames <- lapply(read1Files, function(x){strsplit(x, split = "/") %>% unlist %>%
+            tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
+
+    logFiles <- file.path("STORMtmp_dir", paste0(rootNames, "_Log.final.out"))
+    # all(file.exists(logFiles))
+    RES <- lapply(logFiles, function(x){
+        read.delim(file = x, header = F, sep = "\t", stringsAsFactors = F)
+    })
     # Merge in one table
-    summary <- matrix(NA, nrow = nrow(x), ncol = length(files))
-    rownames(summary) <- rownames(x)
-    colnames(summary) <- lapply(read1Files, function(x) {strsplit(x, split = "/") %>% unlist %>% tail(1)}) %>% unlist
-    for (i in files){
-        summary[,i] <- RES[[i]]
-    }
+    summary <- lapply(seq_along(RES), function(x){
+        RES[[x]][,2]
+    }) %>% do.call(what = cbind)
+    rownames(summary) <- RES[[1]][,1]
+    colnames(summary) <- rootNames
     outReport <- file.path(outDir, "mappingSummary.txt")
     if(file.exists(outReport)){ # Add columns to existing summary report
         tmp <- read.delim(outReport, row.names = 1)
-        write.table(x = cbind(tmp, summary[,-1]), file = outReport,
+        write.table(x = cbind(tmp, summary), file = outReport,
                     sep = "\t", quote = F, col.names = NA)
     }else{
         write.table(x = summary, file = outReport, sep = "\t", quote = F,
                     col.names = NA)
     }
     # Sort and index with samtools
-    bamFiles <- list.files("STORMtmp_dir", full.names = TRUE, pattern = ".bam$")
+    bamFiles <- file.path("STORMtmp_dir", paste0(rootNames, "_Aligned.out.bam"))
     for(file in bamFiles){
         system(paste0("/apps/RH7U2/gnu/samtools/1.9/bin/samtools sort -o ",
                       gsub(file, pattern = ".bam$", replacement = ".sorted.bam"),
@@ -63,14 +61,15 @@ alignSTAR <- function(read1Files, STARgenomeDir, zipped = TRUE, nCores = 4,
         system(paste0("rm ", file))
     }
     # Remove all garbage
-    garbage <- lapply(c("SJ.out.tab", "Log.progress.out", "Log.out",
-                        "Log.final.out"), function(x){
-                            list.files("STORMtmp_dir", full.names = TRUE,
-                                       pattern = x)}) %>% unlist
+    garbage <- file.path("STORMtmp_dir",
+                         lapply(rootNames, function(x){
+                             paste0(x, c("_SJ.out.tab", "_Log.progress.out", "_Log.out",
+                                         "_Log.final.out"))
+                         }) %>% unlist)
     invisible(file.remove(garbage))
     # Move files to output dir
-    BAM <- lapply(c("sorted.bam$", "sorted.bam.bai$"), function(x){
-        list.files("STORMtmp_dir", full.names = TRUE, pattern = x)}) %>% unlist
+    BAM <- c(gsub(bamFiles, pattern = ".bam$", replacement = ".sorted.bam"),
+             gsub(bamFiles, pattern = ".bam$", replacement = ".sorted.bam.bai"))
     for(file in BAM){
         system(paste("mv", file, outDir))
     }
