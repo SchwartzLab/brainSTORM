@@ -1,15 +1,19 @@
 # STAR alignment
 # Wrapper to perform alignment of sequencing reads to a reference genome
 # using STAR (Dobin) and sorting with Samtools.
-alignSTAR <- function(read1Files, STARgenomeDir, zipped = TRUE, nCores = 4,
+alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE, nCores = 4,
                       alignEndsType = "Local", outSAMtype = "BAM Unsorted",
                       outFilterMultimapNmax = 10, outDir){
     mkTmpDir()
     if(!dir.exists(outDir)){dir.create(outDir)}
     if(zipped){rFCom <- "zcat"}else if(!zipped){rFCom <- "cat"}
     for(read1F in read1Files){
-        read2F <- gsub(read1F, pattern = "R1", replacement = "R2")
-        if(!file.exists(read2F)){stop(read2F, "does not exist.")}
+        if(pairedEnd){
+            read2F <- gsub(read1F, pattern = "R1", replacement = "R2")
+            if(!file.exists(read2F)){stop(read2F, "does not exist.")}
+        }else if(!pairedEnd){
+            read2F <- ""
+        }else{stop("pairedEnd must be logical either TRUE or FALSE")}
         outFPrefix <- strsplit(read1F, split = "/") %>% unlist %>% tail(1) %>%
             gsub(pattern = "R1.fastq.gz", replacement = "") %>%
             gsub(read1F, pattern = "R1.fastq", replacement = "")
@@ -29,11 +33,10 @@ alignSTAR <- function(read1Files, STARgenomeDir, zipped = TRUE, nCores = 4,
     # Alignment Summary Report
     rootNames <- lapply(read1Files, function(x){strsplit(x, split = "/") %>% unlist %>%
             tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
-
     logFiles <- file.path("STORMtmp_dir", paste0(rootNames, "_Log.final.out"))
     # all(file.exists(logFiles))
     RES <- lapply(logFiles, function(x){
-        read.delim(file = x, header = F, sep = "\t", stringsAsFactors = F)
+        data.table::fread(file = x, header = FALSE, stringsAsFactors = FALSE)
     })
     # Merge in one table
     summary <- lapply(seq_along(RES), function(x){

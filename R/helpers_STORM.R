@@ -86,6 +86,3 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
     invisible(file.remove(tmpGTF))
     outDir
 }
-
-
-
