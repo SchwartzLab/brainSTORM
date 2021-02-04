@@ -38,3 +38,58 @@ storm_META <- function(fileNames, varsList, groupVars, setVars, idVars){
     return(DT)
 }
 
+
+# Extract gene sequences from genome and geneAnnotation
+getGeneSeqsfromGenome <- function(geneAnnot, genome, nCores = 1){
+    txtools:::check_mc_windows(nCores)
+    txtools:::check_GA_genome_chrCompat(geneAnnot = geneAnnot, genome = genome)
+    parallel::mclapply(mc.cores = nCores, seq_along(geneAnnot), function(i){
+        selGene <- geneAnnot[i]
+        iGene <- as.character(selGene$name)
+        iChr <- as.character(GenomicRanges::seqnames(selGene))
+        iStr <- as.character(selGene@strand)
+        iGA <- selGene
+        iBlocks <- S4Vectors::mcols(iGA)$blocks %>% txtools:::if_IRangesList_Unlist() %>%
+            IRanges::shift(IRanges::start(iGA) - 1)
+        SEQ <- stringr::str_sub(genome[[iChr]], start = IRanges::start(iBlocks),
+                                end = IRanges::end(iBlocks)) %>% paste(collapse = "") %>%
+            Biostrings::DNAString()
+        if(iStr == "-") {
+            SEQ <- Biostrings::reverseComplement(SEQ)
+        }
+        SEQ
+    }) %>% Biostrings::DNAStringSet()
+}
+
+# Extract transcriptome sequences from genome and generate FASTA file
+mkTranscriptome <- function(fastaGenome, bedAnnotation, outFile = "auto", nCores){
+    genome <- txtools::tx_load_genome(fastaGenome)
+    geneAnnot <- txtools::tx_load_bed(bedAnnotation)
+    seqs <- getGeneSeqsfromGenome(genome = genome, geneAnnot = geneAnnot, nCores)
+    if(outFile == "auto"){
+        mkTmpDir()
+        fileN <- strsplit(fastaGenome, split = "/") %>% unlist %>% tail(1)
+        outFile <- file.path("STORMtmp_dir", paste0(fileN, ".txOme"))
+    }
+    names(seqs) <- geneAnnot$name
+    Biostrings::writeXStringSet(seqs, filepath = outFile)
+    outFile
+}
+
+# Make GeneAnnotation for Transcriptome
+mkBedFromFastaTxOme <- function(fastaTxOme, outFile = "auto"){
+    fa <- txtools::tx_load_genome(fastaTxOme)
+    if(max(Biostrings::width(fa)) > 10000){warning("Maximum sequence length exceeded 10000, make sure sequences represent transcripts.")}
+    if(outFile == "auto"){
+        mkTmpDir()
+        fileN <- strsplit(fastaTxOme, split = "/") %>% unlist %>% tail(1)
+        outFile <- file.path("STORMtmp_dir", paste0(fileN, ".bed"))
+    }
+    tmp <- GenomicRanges::GRanges(seqnames = names(fa),
+                                  ranges = IRanges::IRanges(start = 1, width = Biostrings::width(fa)),
+                                  strand = "+")
+    names(tmp) <- names(fa)
+    plyranges::write_bed(tmp, file = outFile)
+    outFile
+}
+
