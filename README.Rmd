@@ -21,23 +21,27 @@ knitr::opts_chunk$set(
 ```{r}
 # setwd("/home/labs/schwartzlab/miguelg/github_repos/brainSTORM/")
 load_all()
-rmTmpDir()
-unlink("bam_Pa", recursive = TRUE)
+# rmTmpDir()
+# unlink("bam_Pa", recursive = TRUE)
 
 # Genome and Gene Annotation
 fastaGenome <- "/home/labs/schwartzlab/joeg/genomes/Pyrodictium_abyssi/prokka/PROKKA_01222021.fsa"
-bedAnnotation <- "/home/labs/schwartzlab/joeg/genomes/Pyrodictium_abyssi/prokka/PROKKA_01222021_BED6.bed"
+bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_abyssi/PROKKA_01222021_BED6.bed"
 rRNA <- c("PYCC_00363", "PYCC_00364")
 # fastaGenome <- "/home/labs/schwartzlab/miguelg/BIGDATA/genome_references/p_occultum/pAbys_txome.fa"
 # bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_occultum/pAbys_txome.bed"
 
+# Transcriptome for bisulphite conversion
+fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = 8)
+bedTxOme <- mkBedFromFastaTxOme(fastaTxOme)
 
 # STAR Genomes generation
-STARGenome <- mkSTARgenome(fastaGenome, bedAnnotation)
-bisGPath <- bisGenome(fastaGenome)
-STARGenome_bis <- mkSTARgenome(bisGPath, bedAnnotation)
+bisTxPath <- bisGenome(fastaTxOme)
+STARGenome <- mkSTARgenome(fastaTxOme, bedTxOme)
+STARGenome_bis <- mkSTARgenome(bisTxPath, bedTxOme)
 
 # META
+
 r1Files <- file.path("fastq", grep(list.files("fastq"), pattern = "R1", value = TRUE))
 
 vList <- list(organism = c("PyroAbyss", "TherAcid", "Yeast", "Human"), 
@@ -67,6 +71,21 @@ alignSTAR(read1Files = META[libTreat == "m5C", FASTQ],
           alignEndsType = "Local", 
           outSAMtype = "BAM Unsorted", 
           outDir = "bam_Pa")
+
+read1Files <- r1Files
+rootNames <- lapply(read1Files, function(x){strsplit(x, split = "/") %>% 
+        unlist %>% tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
+
+BAM_files <- file.path("bam_Pa", paste0(rootNames, "_Aligned.out.sorted.bam"))
+
+bam2TxDT(BAMfile = BAM_files[1], 
+         geneAnnot = TXOME, 
+         genome = GENOME, 
+         dtType = "covNuc", 
+         outDir = "bam_Pa", 
+         nCores = 8)
+
+
 
 ```
 
