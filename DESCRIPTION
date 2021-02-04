@@ -25,4 +25,8 @@ Imports:
     tibble,
     magrittr,
     ShortRead,
-    Rsamtools
+    Rsamtools,
+    GenomicRanges,
+    Biostrings,
+    IRanges,
+    S4Vectors
