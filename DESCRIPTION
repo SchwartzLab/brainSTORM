@@ -29,4 +29,5 @@ Imports:
     GenomicRanges,
     Biostrings,
     IRanges,
-    S4Vectors
+    S4Vectors,
+    tidyr
