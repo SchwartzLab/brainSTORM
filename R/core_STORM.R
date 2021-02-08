@@ -26,7 +26,7 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
     # Load gene annotation
     gA <- geneAnnot
     if(verb){
-        cat("Gene annotation loaded with", length(gA), "gene models.")
+        cat("Gene annotation loaded with", length(gA), "gene models.\n")
     }
     GENOME <- genome
     # Load BAM file
@@ -102,5 +102,5 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
                 quote = FALSE,
                 row.names = FALSE,
                 col.names = FALSE)
-
+    file.path(outDir, outName)
 }

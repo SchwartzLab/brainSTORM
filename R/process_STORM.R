@@ -1,9 +1,10 @@
 # STAR alignment
 # Wrapper to perform alignment of sequencing reads to a reference genome
 # using STAR (Dobin) and sorting with Samtools.
-alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE, nCores = 4,
-                      alignEndsType = "Local", outSAMtype = "BAM Unsorted",
-                      outFilterMultimapNmax = 10, outDir){
+alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE,
+                      nCores = 4, alignEndsType = "Local",
+                      outSAMtype = "BAM Unsorted", outFilterMultimapNmax = 10,
+                      outDir){
     mkTmpDir()
     if(!dir.exists(outDir)){dir.create(outDir)}
     if(zipped){rFCom <- "zcat"}else if(!zipped){rFCom <- "cat"}
@@ -36,7 +37,7 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     logFiles <- file.path("STORMtmp_dir", paste0(rootNames, "_Log.final.out"))
     # all(file.exists(logFiles))
     RES <- lapply(logFiles, function(x){
-        data.table::fread(file = x, header = FALSE, stringsAsFactors = FALSE)
+        read.delim(file = x, header = FALSE, stringsAsFactors = FALSE)
     })
     # Merge in one table
     summary <- lapply(seq_along(RES), function(x){
@@ -46,7 +47,8 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     colnames(summary) <- rootNames
     outReport <- file.path(outDir, "mappingSummary.txt")
     if(file.exists(outReport)){ # Add columns to existing summary report
-        tmp <- read.delim(outReport, row.names = 1)
+        tmp <- data.table::fread(outReport, header = TRUE) %>%
+            tibble::column_to_rownames("V1")
         write.table(x = cbind(tmp, summary), file = outReport,
                     sep = "\t", quote = F, col.names = NA)
     }else{
@@ -183,37 +185,24 @@ listFilePatt <- function(pattern, path = "."){
 # Notebook 1 ###################################################################
 
 # Tables of files from FASTQ to expected BAM and RDS targets
-files_table <- function(fastq_path){
-    fastq <- listFilePatt("R1", fastq_path)
-    fastq_m5C <- listFilePatt("R1", paste0(fastq_path, "m5C/"))
-    bam <- gsub(pattern = "R1.fastq.gz",
-                replacement = "Aligned.out.sorted.bam", fastq) %>%
-        paste0(gsub("fastq", "bam", fastq_path), .)
-    bam_m5C <- gsub(pattern = "R1.fastq.gz",
-                    replacement = "Aligned.out.sorted.bam", fastq_m5C) %>%
-        paste0(paste0(gsub("fastq", "bam", fastq_path), "m5C/"), .)
-    lce <- gsub(pattern = "R1.fastq.gz",
-                replacement = "Aligned.out.sorted.lce.txt", fastq) %>%
-        paste0(gsub("fastq", "bam", fastq_path), .)
-    lce_m5C <- gsub(pattern = "R1.fastq.gz",
-                    replacement = "Aligned.out.sorted.lce.txt", fastq_m5C) %>%
-        paste0(paste0(gsub("fastq", "bam", fastq_path), "m5C/"), .)
-    rds <- gsub(pattern = "R1.fastq.gz",
-                replacement = "Aligned.out.sorted.txDT.rds", fastq) %>%
-        paste0(gsub("fastq", "bam", fastq_path), .)
-    rds_m5C <- gsub(pattern = "R1.fastq.gz",
-                    replacement = "Aligned.out.sorted.txDT.rds", fastq_m5C) %>%
-        paste0(paste0(gsub("fastq", "bam", fastq_path), "m5C/"), .)
-    fastq <- paste0(fastq_path, fastq)
-    fastq_m5C <- paste0(paste0(fastq_path, "m5C/"), fastq_m5C)
+files_table <- function(META, outDir){
+    fastq <- META$FASTQ
+    if(!"BAM" %in% colnames(META)){
+        META <- addBAMFileNames(META, outDir)
+    }
+    bam <- META$BAM
+    lce <- gsub(pattern = "Aligned.out.sorted.bam",
+                replacement = "Aligned.out.sorted.lce.txt", META$BAM)
+    rds <- gsub(pattern = "Aligned.out.sorted.bam",
+                replacement = "Aligned.out.sorted.txDT.rds", META$BAM)
     # Table
-    tmpDT <- data.table(FASTQ = c(fastq, fastq_m5C),
-                        BAM = c(bam, bam_m5C),
-                        BAM_ok = file.exists(c(bam, bam_m5C)),
-                        lce = c(lce, lce_m5C),
-                        lce_ok = file.exists(c(lce, lce_m5C)),
-                        rds = c(rds, rds_m5C),
-                        rds_ok = file.exists(c(rds, rds_m5C)))
+    tmpDT <- data.table::data.table(FASTQ = c(fastq),
+                        BAM = c(bam),
+                        BAM_ok = file.exists(c(bam)),
+                        lce = c(lce),
+                        lce_ok = file.exists(c(lce)),
+                        rds = c(rds),
+                        rds_ok = file.exists(c(rds)))
     return(tmpDT)
 }
 
@@ -228,45 +217,48 @@ fastq_dupRate <- function(FASTQs_pahts, nCores){
 }
 
 # FASTQ nucleotide frequency
-fastq_nucFreq <- function(FASTQs_pahts, META, nCores){
-    mclapply(mc.cores = nCores, FASTQs_pahts, function(file){
-        tmp <- ShortRead::readFastq(file)
-        tmp2 <- ShortRead::readFastq(gsub(file, pattern = "R1", replacement = "R2"))
-        tmp2@sread <- tmp2@sread %>% complement()
-        mR1R2 <- paste(tmp@sread, tmp2@sread, sep = "")
-        nucFreq <- mR1R2 %>% str_split(pattern = "") %>% unlist %>% table
-        return(nucFreq)
-    }) %>% do.call(what = cbind) %>% set_colnames(META$id)
+fastq_nucFreq <- function(META, nCores, firstN = 1e4){
+    parallel::mclapply(mc.cores = nCores, META$FASTQ, function(file){
+        tmp <- readLines(file, firstN * 4)[seq(2, firstN*4, 4)] %>% Biostrings::DNAStringSet()
+        tmp2 <- readLines(gsub(file, pattern = "R1",
+                               replacement = "R2"), firstN * 4)[seq(2, firstN*4, 4)] %>%
+            Biostrings::DNAStringSet() %>% Biostrings::complement()
+        mR1R2 <- paste(tmp, tmp2, sep = "")
+        nucFreq <- mR1R2 %>% stringr::str_split(pattern = "") %>% unlist %>% table
+        return(nucFreq[c("A", "C", "G", "T")])
+    }) %>% do.call(what = cbind) %>% magrittr::set_colnames(META$id)
 }
 
 ## ggplot nucleotide frequency barplots
-gg_nucFreq <- function(nucF_x, species){
-    tmp <- prop.table(nucF_x, margin = 2) %>% data.frame %>% rownames_to_column(var = "nuc") %>%
-        pivot_longer(cols = -nuc, names_to = "Sample", values_to = "Ratio")
-    ggplot(tmp, aes(x = Sample, y = Ratio, fill = nuc)) + geom_bar(stat = "identity") +
-        scale_fill_brewer(palette="Set1") + theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-        ggtitle(paste("Nucleotide Frequency per library in", species))
+gg_nucFreq <- function(nucF_x, subtitle){
+    tmp <- prop.table(nucF_x, margin = 2) %>% data.frame %>% tibble::rownames_to_column(var = "nuc") %>%
+        tidyr::pivot_longer(cols = -nuc, names_to = "Sample", values_to = "Ratio")
+    ggplot2::ggplot(tmp, ggplot2::aes(x = Sample, y = Ratio, fill = nuc)) +
+        ggplot2::geom_bar(stat = "identity") +
+        ggplot2::scale_fill_brewer(palette="Set1") +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+        ggplot2::ggtitle(paste("Nucleotide Frequency per library in", subtitle))
 }
 
 # Reads report table
 reads_report <- function(DT, META, nCores = 4){
-    res1 <- mclapply(mc.cores = nCores, DT$FASTQ, function(x){
+    res1 <- parallel::mclapply(mc.cores = nCores, DT$FASTQ, function(x){
         tmp <- ShortRead::readFastq(x)
         length(tmp)
     }) %>% unlist
-    res2 <- mclapply(mc.cores = nCores, DT$BAM[DT$BAM_ok], function(x){
+    res2 <- parallel::mclapply(mc.cores = nCores, DT$BAM[DT$BAM_ok], function(x){
         tmp2 <- Rsamtools::scanBam(x)
         tmp2[[1]]$qname %>% unique %>% length
     }) %>% unlist
-    res3 <- mclapply(mc.cores = nCores, DT$rds[DT$rds_ok], function(x){
-        tmplog <- fread(gsub(pattern = "rds", "log", x), header = F)
+    res3 <- parallel::mclapply(mc.cores = nCores, DT$rds[DT$rds_ok], function(x){
+        tmplog <- data.table::fread(gsub(pattern = "rds", "log", x), header = F)
         tmplog[grep(tmplog$V1, pattern =  "unique reads"),]$V2 %>% as.numeric()
     }) %>% unlist
-    tmpDT <- data.table(sample = META$id,
-                        FASTQ_reads = res1,
-                        BAM_aligns = NA,
-                        tx_starts = NA)
+    tmpDT <- data.table::data.table(sample = META$id,
+                                    FASTQ_reads = res1,
+                                    BAM_aligns = NA,
+                                    tx_starts = NA)
     tmpDT$BAM_aligns[DT$BAM_ok] <- res2
     tmpDT$tx_starts[DT$rds_ok] <- res3
     tmpDT$pC_BAM <- round(tmpDT$BAM_aligns / tmpDT$FASTQ_reads * 100, 2)
@@ -284,12 +276,14 @@ gg_readStats <- function(rReport, species){
     tmpDT <- tidyr::pivot_longer(data = tmpDT[,c("sample", "FASTQ", "BAM", "txDT")],
                                  cols = c("FASTQ", "BAM", "txDT"), names_to = "Reads")
     tmpDT$Reads <- factor(tmpDT$Reads, levels = c("FASTQ", "BAM", "txDT"))
-    tmpDT$value <- divide_by(tmpDT$value, 1e6)
-    t_GG1 <- ggplot(tmpDT, aes(x = sample, y = value, fill = Reads)) +
-        geom_bar(stat="identity") + theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-        ggtitle(paste("Reads in", species, "libraries by processing step"),) +
-        ylab("Million reads") + xlab("Samples")
+    tmpDT$value <- magrittr::divide_by(tmpDT$value, 1e6)
+    t_GG1 <- ggplot2::ggplot(tmpDT, ggplot2::aes(x = sample, y = value, fill = Reads)) +
+        ggplot2::geom_bar(stat="identity") +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+        ggplot2::ggtitle(paste("Reads in", species, "libraries by processing step"),) +
+        ggplot2::ylab("Million reads") +
+        ggplot2::xlab("Samples")
 
     # Proportion
     tmpDT <- rReport[, -c(5, 6)]
@@ -303,12 +297,13 @@ gg_readStats <- function(rReport, species){
                                  cols = c("FASTQ", "BAM", "txDT"), names_to = "Reads")
     tmpDT$Reads <- factor(tmpDT$Reads, levels = c("FASTQ", "BAM", "txDT"))
 
-
-    t_GG2 <- ggplot(tmpDT, aes(x = sample, y = value, fill = Reads)) +
-        geom_bar(stat="identity") + theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-        ggtitle(paste("Proportion of reads in", species, "libraries by processing step"),) +
-        ylab("Proportion") + xlab("Samples")
+    t_GG2 <- ggplot2::ggplot(tmpDT, ggplot2::aes(x = sample, y = value, fill = Reads)) +
+        ggplot2::geom_bar(stat="identity") +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+        ggplot2::ggtitle(paste("Proportion of reads in", species, "libraries by processing step"),) +
+        ggplot2::ylab("Proportion") +
+        ggplot2::xlab("Samples")
     return(list(t_GG1, t_GG2))
 }
 
@@ -336,24 +331,33 @@ ggAlignEffPlot <- function(META, rReport){
     list(tmpGG1, tmpGG2, tmpGG3)
 }
 
-# Library complexity barplots and tables
-gg_lce <- function(f_tab, e_reads, tab_name, species){
-    tmp <- lapply(f_tab$lce, fread) %>%
-        set_names(f_tab$id)
+# Library complexity extrapolation barplots and tables
+gg_lce <- function(META, tab_name, speciesName = ""){
+    lceFiles <- gsub(META$BAM, pattern = ".bam", replacement = ".lce.txt") %>%
+        setNames(META$id)
+    if(!all(file.exists(lceFiles))){
+        stop("Report files missing:\n", paste(lceFiles[!file.exists(lceFiles)], collapse = " \n"))
+    }
+    tmp <- lapply(lceFiles, function(x) data.table::fread(x)) %>%
+        magrittr::set_names(META$id)
     tmp <- lapply(names(tmp), function(x){
         cbind(tmp[[x]], id = x)
-    }) %>% do.call(what = rbind) %>% data.table()
-    fwrite(x = tmp, file = tab_name, sep = "\t")
+    }) %>% do.call(what = rbind) %>% data.table::data.table()
+    data.table::fwrite(x = tmp, file = tab_name, sep = "\t")
     cat("Library complexity table output:", tab_name)
-    tmp <- tmp[TOTAL_READS == e_reads,]
-    ggOUT <- ggplot(tmp, aes(x = id, y = EXPECTED_DISTINCT)) +
-        geom_bar(stat="identity", color="black", position=position_dodge()) +
-        geom_errorbar(aes(ymin=LOWER_0.95CI, ymax=UPPER_0.95CI), width=.2,
-                      position=position_dodge(1)) + theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-        ggtitle(label = paste("Library complexity extrapolation -", species),
-                sub = paste("Expected distinct reads at", e_reads, "depth. CI = 95%")) +
-        ylab("Expected distinct reads") + xlab("Samples")
+    tmpT <- table(tmp$TOTAL_READS)
+    e_reads <- names(tmpT)[tmpT == max(tmpT)] %>% as.numeric %>% max
+    tmp <- tmp[tmp$TOTAL_READS == e_reads,]
+    ggOUT <- ggplot2::ggplot(tmp, ggplot2::aes(x = id, y = EXPECTED_DISTINCT)) +
+        ggplot2::geom_bar(stat="identity", color="black", position= ggplot2::position_dodge()) +
+        ggplot2::geom_errorbar(ggplot2::aes(ymin=LOWER_0.95CI, ymax=UPPER_0.95CI), width=.2,
+                               position= ggplot2::position_dodge(1)) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+        ggplot2::ggtitle(label = paste("Library complexity extrapolation -", speciesName),
+                         sub = paste("Expected distinct reads at", e_reads, "depth. CI = 95%")) +
+        ggplot2::ylab("Expected distinct reads") +
+        ggplot2::xlab("Samples")
     return(ggOUT)
 }
 

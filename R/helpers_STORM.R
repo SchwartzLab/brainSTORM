@@ -86,3 +86,36 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
     invisible(file.remove(tmpGTF))
     outDir
 }
+
+# Add Bamfile names to META based on the
+addBAMFileNames <- function(META, outDir = ""){
+    rootNames <- META$FASTQ %>% lapply(function(x){strsplit(x, split = "/") %>%
+            unlist %>% tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
+    if(outDir == ""){
+        META$BAM <- paste0(rootNames, "_Aligned.out.sorted.bam")
+    }else{META$BAM <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.bam"))}
+    META
+}
+
+# Library complexity reports lce.txt
+libComplexReport <- function(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = FALSE){
+    if(all(file.exists(META$BAM))){
+        for(file in META$BAM){
+            com <- paste0("/apps/RH7U2/gnu/preseq/2.0.1/preseq lc_extrap -P -B ",
+                          "-e ", maxExtrapolation, " -s ", steps, " ", file, " -o ",
+                          gsub(pattern = ".bam", replacement = ".lce.txt", x = file),
+                          " &")
+            system(com)
+        }
+        Sys.sleep(time = 5)
+        lastBam <- gsub(pattern = ".bam", replacement = ".lce.txt",x = META$BAM)
+        while(min(difftime(Sys.time(), file.info(lastBam)$mtime, units = "secs")) < 60){
+            Sys.sleep(time = 2)
+        }
+    }else{
+        stop("Files ", paste(META$BAM[!file.exists(META$BAM)], collapse = " "),
+             " do not exist")
+    }
+    if(verbose){cat("DONE: Library complexity reports.")}
+}
+
