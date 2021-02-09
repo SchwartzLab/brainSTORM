@@ -107,14 +107,33 @@ rReport_Pa <- reads_report(f_tab_Pa, META, nCores)
 ggReadStats_Pa <- gg_readStats(rReport_Pa, EXP_NAME)
 gridExtra::grid.arrange(ggReadStats_Pa[[1]], ggReadStats_Pa[[2]], ncol = 2)
 
-load_all()
 
 genome <- GENOME
 geneAnnot <- TXOME
 nCores <- 8
 
 STORM <- storm_STORM(META, genome, geneAnnot, nCores)
-STORM_Pa <- SSIIIandTGIRT_metrics(STORM_Pa)
+STORM <- SSIIIandTGIRT_metrics(STORM) %>% storm_makeCalls()
+
+logMods_Sc <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/Lib499/logMods_Sc.rds")
+logMods_Hs <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/Lib499/logMods_Hs.rds")
+
+# Archeal data fit using human and yeast model
+STORM_Pa_Sc <- call_RNAmods_logRegMods(STORM, logMods_Sc) %>% storm_summary()
+STORM_Pa_Hs <- call_RNAmods_logRegMods(STORM, logMods_Hs) %>% storm_summary()
+
+ggList_Pa_Sc <- lapply(RNAmods_vec[1:6], function(RNAmod_i){
+    STORM <- STORM_Pa_Sc$SUMMARY[[RNAmod_i]]
+    STORM$isMod <- STORM[,grepl(pattern = "pred_", x = names(STORM)), with = FALSE] %>% apply(1, all)
+    STORM$isMod[is.na(STORM$isMod)] <- FALSE
+    tmpT <- table(STORM$isMod, STORM$refSeq)
+    gg1 <- ggplot2::ggplot(STORM, ggplot2::aes(x= linScore_80deg, y = linScore_95deg, colour = isMod)) + 
+        ggplot2::geom_point() + ggplot2::facet_grid(.~refSeq)
+    gg2 <- ggplot2::ggplot(STORM, ggplot2::aes(x= linScore_80deg, y = linScore_100deg, colour = isMod)) + 
+        ggplot2::geom_point() + ggplot2::facet_grid(.~refSeq)
+    list(table = tmpT, gg1 = gg1, gg2 = gg2)
+}) %>% magrittr::set_names(RNAmods_vec[1:6])
+gridExtra::grid.arrange(ggList_Pa_Sc$Y$gg1, ggList_Pa_Sc$Y$gg2, ncol = 1)
 
 ```
 
