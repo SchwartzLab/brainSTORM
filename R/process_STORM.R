@@ -80,49 +80,48 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     }
 }
 
-
 # STORM object constructor from META table
-storm_STORM <- function(META, fastaGenome = NULL, geneAnnot = NULL, nCores = 1){
+storm_STORM <- function(META, genome = NULL, geneAnnot = NULL, nCores = 1){
     if(hasDups(META$id)){
         stop("Not allowed duplicated id variables in META")
     }
     DTL <- lapply(META$RDS, function(x) readRDS(x)) # load RDS files
     # Check if data is in data.table or list format
-    if(all(lapply(DTL, class) %>% unlist %>% equals("data.frame"))){
-        DTL <- lapply(DTL, data.table) %>% set_names(META$id)
-    }else if(all(lapply(DTL, class) %>% unlist %>% equals("list"))){
+    if(all(lapply(DTL, class) %>% unlist %>% magrittr::equals("data.frame"))){
+        DTL <- lapply(DTL, data.table) %>% magrittr::set_names(META$id)
+    }else if(all(lapply(DTL, class) %>% unlist %>% magrittr::equals("list"))){
         DTL <- lapply(DTL, function(x){
-            do.call(x, what = rbind) %>% data.table()
-        }) %>% set_names(META$id)
+            do.call(x, what = rbind) %>% data.table::data.table()
+        }) %>% magrittr::set_names(META$id)
     }
     # Have reference sequence, if not add it
-    reqRefSeq <- lapply(DTL, function(x){"refSeq" %in% names(x)}) %>% unlist %>% not
-    if(sum(reqRefSeq) > 0 & is.null(fastaGenome) | is.null(geneAnnot)){
-        stop("Data requires reference sequence, fastaGenome and geneAnnot arguments must be provided")
+    reqRefSeq <- lapply(DTL, function(x){"refSeq" %in% names(x)}) %>% unlist %>% magrittr::not()
+    if(sum(reqRefSeq) > 0 & is.null(genome) | is.null(geneAnnot)){
+        stop("Data requires reference sequence, genome and geneAnnot arguments must be provided")
     }
     if(sum(reqRefSeq) > 0){
-        DTL[reqRefSeq] <- mclapply(mc.cores = nCores, DTL[reqRefSeq], function(DT){
-            tx_split_DT(DT) %>% lapply(function(x){
-                tx_add_refSeqDT(DT = x, genome = fastaGenome, geneAnnot = geneAnnot)
-            }) %>% tx_merge_DT()
+        DTL[reqRefSeq] <- parallel::mclapply(mc.cores = nCores, DTL[reqRefSeq], function(DT){
+            txtools::tx_split_DT(DT) %>% lapply(function(x){
+                txtools::tx_add_refSeqDT(DT = x, genome = genome, geneAnnot = geneAnnot)
+            }) %>% txtools::tx_merge_DT()
         })
     }
     # Check uniformity of DTs, if unequal equalize
     tmpPos <- lapply(DTL, function(DT){paste(DT$gene, DT$txcoor, sep = ":")})
-    identCoors <- lapply(tmpPos[-1], function(x){identical(tmpPos[[1]], x)}) %>% unlist %>% all
+    identCoors <- lapply(tmpPos[-1], function(x){identical(tmpPos[[1]], x)}) %>% unlist() %>% all()
     if(!identCoors){
-        if(is.null(geneAnnot) | is.null(fastaGenome)){
+        if(is.null(geneAnnot) | is.null(genome)){
             stop("Data needs compatibility adjustment, this requires geneAnnot and
-                 fastaGenome arguments to be provided")
+                 genome arguments to be provided")
         }
-        tmpGenes <- lapply(DTL, function(x) as.character(x$gene)) %>% unlist %>% unique
+        tmpGenes <- lapply(DTL, function(x) as.character(x$gene)) %>% unlist() %>% unique()
         tmpGA <- geneAnnot[match(tmpGenes, geneAnnot$name)]
         DTL <- lapply(DTL, function(DT){
-            complete_DT(DT, tmpGA, fastaGenome, nCores)
+            txtools::tx_complete_DT(DT, tmpGA, genome, nCores)
         })
     }
     if(!("pos" %in% names(DTL[[1]]))){
-        DTL <- lapply(DTL, function(x) tx_add_pos(x))
+        DTL <- lapply(DTL, function(x) txtools::tx_add_pos(x))
     }
     STORM <- list(META = META,
                   DATA = DTL,
