@@ -87,16 +87,6 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
     outDir
 }
 
-# Add Bamfile names to META based on the
-addBAMFileNames <- function(META, outDir = ""){
-    rootNames <- META$FASTQ %>% lapply(function(x){strsplit(x, split = "/") %>%
-            unlist %>% tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
-    if(outDir == ""){
-        META$BAM <- paste0(rootNames, "_Aligned.out.sorted.bam")
-    }else{META$BAM <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.bam"))}
-    META
-}
-
 # Library complexity reports lce.txt
 libComplexReport <- function(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = FALSE){
     if(all(file.exists(META$BAM))){
