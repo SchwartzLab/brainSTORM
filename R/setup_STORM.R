@@ -29,7 +29,7 @@ storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
     BAM <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.bam"))
     RDS <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.txDT.rds"))
     DT <- tibble::add_column(.data = DT, .after = "FASTQ", BAM = BAM) %>%
-    tibble::add_column(.after = "BAM", RDS = RDS)
+        tibble::add_column(.after = "BAM", RDS = RDS)
     return(DT)
 }
 

@@ -112,7 +112,8 @@ load_all()
 genome <- GENOME
 geneAnnot <- TXOME
 nCores <- 8
-STORM_Pa <- storm_STORM(META, genome, geneAnnot, nCores)
+
+STORM <- storm_STORM(META, genome, geneAnnot, nCores)
 STORM_Pa <- SSIIIandTGIRT_metrics(STORM_Pa)
 
 ```

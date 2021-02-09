@@ -50,10 +50,10 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
         tmp <- data.table::fread(outReport, header = TRUE) %>%
             tibble::column_to_rownames("V1")
         utils::write.table(x = cbind(tmp, summary), file = outReport,
-                    sep = "\t", quote = F, col.names = NA)
+                           sep = "\t", quote = F, col.names = NA)
     }else{
         utils::write.table(x = summary, file = outReport, sep = "\t", quote = F,
-                    col.names = NA)
+                           col.names = NA)
     }
     # Sort and index with samtools
     bamFiles <- file.path("STORMtmp_dir", paste0(rootNames, "_Aligned.out.bam"))
@@ -101,9 +101,9 @@ storm_STORM <- function(META, genome = NULL, geneAnnot = NULL, nCores = 1){
     }
     if(sum(reqRefSeq) > 0){
         DTL[reqRefSeq] <- parallel::mclapply(mc.cores = nCores, DTL[reqRefSeq], function(DT){
-            txtools::txtools::tx_split_DT(DT) %>% lapply(function(x){
+            txtools::tx_split_DT(DT) %>% lapply(function(x){
                 txtools::tx_add_refSeqDT(DT = x, genome = genome, geneAnnot = geneAnnot)
-            }) %>% txtools::txtools::tx_merge_DT()
+            }) %>% txtools::tx_merge_DT()
         })
     }
     # Check uniformity of DTs, if unequal equalize
@@ -144,15 +144,15 @@ storm_summary <- function(STORM){
             tmp_log <- lapply(SETS, function(x){
                 STORM$CALLS[[x]][[RNAmod_i]]$logist_Score
             }) %>% do.call(what = cbind) %>% magrittr::set_colnames(paste("logScore",
-                                                                SETS, sep = "_"))
+                                                                          SETS, sep = "_"))
             tmp_lin <- lapply(SETS, function(x){
                 STORM$CALLS[[x]][[RNAmod_i]]$linear_Score
             }) %>% do.call(what = cbind) %>% magrittr::set_colnames(paste("linScore",
-                                                                SETS, sep = "_"))
+                                                                          SETS, sep = "_"))
             tmp_prd <- lapply(SETS, function(x){
                 STORM$CALLS[[x]][[RNAmod_i]]$pred
             }) %>% do.call(what = cbind) %>% magrittr::set_colnames(paste("pred",
-                                                                SETS, sep = "_"))
+                                                                          SETS, sep = "_"))
             tmp_out <- cbind(tmp_out, tmp_lin, tmp_log, tmp_prd)
             return(tmp_out)
         }
@@ -192,12 +192,12 @@ files_table <- function(META){
                 replacement = "Aligned.out.sorted.txDT.rds", META$BAM)
     # Table
     tmpDT <- data.table::data.table(FASTQ = c(fastq),
-                        BAM = c(bam),
-                        BAM_ok = file.exists(c(bam)),
-                        lce = c(lce),
-                        lce_ok = file.exists(c(lce)),
-                        rds = c(rds),
-                        rds_ok = file.exists(c(rds)))
+                                    BAM = c(bam),
+                                    BAM_ok = file.exists(c(bam)),
+                                    lce = c(lce),
+                                    lce_ok = file.exists(c(lce)),
+                                    rds = c(rds),
+                                    rds_ok = file.exists(c(rds)))
     return(tmpDT)
 }
 
@@ -221,7 +221,7 @@ fastq_nucFreq <- function(META, nCores, firstN = 1e4){
         mR1R2 <- paste(tmp, tmp2, sep = "")
         nucFreq <- mR1R2 %>% stringr::str_split(pattern = "") %>% unlist %>% table
         return(nucFreq[c("A", "C", "G", "T")])
-    }) %>% do.call(what = cbind) %>% magrittr::magrittr::set_colnames(META$id)
+    }) %>% do.call(what = cbind) %>% magrittr::set_colnames(META$id)
 }
 
 ## ggplot nucleotide frequency barplots
@@ -365,13 +365,13 @@ gg_lceLines <- function(f_tab){
         cbind(tmp[[x]], id = x)
     }) %>% do.call(what = rbind) %>% data.table::data.table()
     tmpGG <- ggplot2::ggplot(tmp) + ggplot2::geom_line(ggplot2::aes(x = tmp$TOTAL_READS,
-                                         y = tmp$EXPECTED_DISTINCT,
-                                         colour = id)) +
+                                                                    y = tmp$EXPECTED_DISTINCT,
+                                                                    colour = id)) +
         ggplot2::geom_ribbon(ggplot2::aes(x = tmp$TOTAL_READS,
-                        y = tmp$EXPECTED_DISTINCT,
-                        ymin= tmp$LOWER_0.95CI,
-                        ymax= tmp$UPPER_0.95CI,
-                        fill = tmp$id),alpha=0.2) + ggplot2::theme_minimal()
+                                          y = tmp$EXPECTED_DISTINCT,
+                                          ymin= tmp$LOWER_0.95CI,
+                                          ymax= tmp$UPPER_0.95CI,
+                                          fill = tmp$id),alpha=0.2) + ggplot2::theme_minimal()
     plotly::ggplotly(tmpGG)
 }
 
@@ -645,9 +645,9 @@ train_RF_CP <- function(STORM, RNAmodsList, varList){
                               RNAmod = factor(nucList_Sc[[i]]))
         CPmodel <- lapply(varList[[i]], function(iVar){
             tmpC <- cutpointr::cutpointr(tmpData[, iVar], tmpData[, "RNAmod"],
-                              method = cutpointr::maximize_metric, metric = cutpointr::sum_sens_spec,
-                              direction = ">=", pos_class = TRUE,
-                              use_midpoints = TRUE, na.rm = TRUE)
+                                         method = cutpointr::maximize_metric, metric = cutpointr::sum_sens_spec,
+                                         direction = ">=", pos_class = TRUE,
+                                         use_midpoints = TRUE, na.rm = TRUE)
             tmpC$predictor <- iVar
             tmpC
         })

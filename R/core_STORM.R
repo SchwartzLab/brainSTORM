@@ -97,10 +97,10 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
                 "Total time taken:", paste(round(timeTot, 2), units(timeTot), sep = " ")) %>%
         matrix(ncol = 2, byrow =T)
     utils::write.table(x = report,
-                file = file.path(outDir, reportName),
-                sep = "\t",
-                quote = FALSE,
-                row.names = FALSE,
-                col.names = FALSE)
+                       file = file.path(outDir, reportName),
+                       sep = "\t",
+                       quote = FALSE,
+                       row.names = FALSE,
+                       col.names = FALSE)
     file.path(outDir, outName)
 }

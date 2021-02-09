@@ -111,7 +111,7 @@ add_SRD1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% tmpRES$onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -138,7 +138,7 @@ add_SRlog2FCh1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -165,7 +165,7 @@ add_SRD <- function(STORM, group_A, group_B, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -185,7 +185,7 @@ add_2OmeScore <- function(STORM,
         newColName <- paste("NmStopScore", lib_LowdNTPs, lib_HighdNTPs, sep = "_")
     }
     sets <- intersect(STORM$META[STORM$META$group == lib_LowdNTPs,]$set,
-     STORM$META[STORM$META$group == lib_HighdNTPs,]$set)
+                      STORM$META[STORM$META$group == lib_HighdNTPs,]$set)
     if(length(sets) == 0){stop("No sets found with both lib_LowdNTPs and lib_HighdNTPs label")}
     OUT <- lapply(sets, function(iSet){
         id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == lib_LowdNTPs]$id
@@ -199,7 +199,7 @@ add_2OmeScore <- function(STORM,
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT[,c("chr", "gencoor", "strand", "gene",
-                                   "txcoor", "pos", "refSeq")], tmpRES)
+                                               "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     })
@@ -237,7 +237,7 @@ add_MRD <- function(STORM, group_A, group_B, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -264,7 +264,7 @@ add_CytPer <- function(STORM, group_A, group_B, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -287,7 +287,7 @@ add_SR_1bpDS <- function(STORM, group_A, newColName = "auto", onNucs = c("A", "C
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -310,7 +310,7 @@ add_MR <- function(STORM, group_A, newColName = "auto", onNucs = c("A", "C", "G"
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -334,7 +334,7 @@ storm_add_scoreA3p <- function(STORM, group_A, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -358,7 +358,7 @@ storm_add_scoreA5p <- function(STORM, group_A, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[, c("chr", "gencoor", "strand", "gene",
-                                      "txcoor", "pos", "refSeq")], tmpRES)
+                                                  "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
@@ -502,7 +502,7 @@ add_CtoT_MRD <- function(STORM, group_A, group_B, newColName = "auto",
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
-                                     "txcoor", "pos", "refSeq")], tmpRES)
+                                                 "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
