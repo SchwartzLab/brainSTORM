@@ -85,7 +85,7 @@ storm_STORM <- function(META, genome = NULL, geneAnnot = NULL, nCores = 1){
     if(hasDups(META$id)){
         stop("Not allowed duplicated id variables in META")
     }
-    DTL <- lapply(META$RDS, function(x) readRDS(x)) # load RDS files
+    DTL <- lapply(META$RDS, function(x) readRDS(x)) %>% magrittr::set_names(META$id)# load RDS files
     # Check if data is in data.table or list format
     if(all(lapply(DTL, class) %>% unlist %>% magrittr::equals("data.frame"))){
         DTL <- lapply(DTL, data.table::data.table) %>% magrittr::set_names(META$id)
@@ -167,7 +167,7 @@ hlpr_add_REScols <- function(STORM_RES, REScols){
     iMetric <- unique(REScols[,"metric"]) %>% as.character()
     # remove results for identical metric
     if("metric" %in% names(STORM_RES)){
-        STORM_RES <- STORM_RES[metric != iMetric,]
+        STORM_RES <- STORM_RES[STORM_RES$metric != iMetric,]
     }
     STORM_RES <- rbind(STORM_RES, REScols)
     STORM_RES
@@ -310,19 +310,19 @@ ggAlignEffPlot <- function(META, rReport){
         ggplot2::ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
         ggplot2::ylab("% Aligned reads") +
         ggplot2::theme_minimal() +
-        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
     tmpGG2 <- ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$bioTreat, y = tmp$pC_BAM, colour = tmp$bioTreat)) +
         ggplot2::geom_boxplot() + ggplot2::geom_point(colour = "black") +
         ggplot2::ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
         ggplot2::ylab("% Aligned reads") +
         ggplot2::theme_minimal() +
-        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
     tmpGG3 <- ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$RTase, y = tmp$pC_BAM, colour = tmp$RTase)) +
         ggplot2::geom_boxplot() + ggplot2::geom_point(colour = "black") +
         ggplot2::ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
         ggplot2::ylab("% Aligned reads") +
         ggplot2::theme_minimal() +
-        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
     list(tmpGG1, tmpGG2, tmpGG3)
 }
 
@@ -427,8 +427,8 @@ ggMetricsNuc <- function(STORM, title){
     tmpDT <- STORM$RES %>% stats::na.omit()
     ggplot2::ggplot(tmpDT, ggplot2::aes(x = nuc, y = score)) + ggplot2::geom_boxplot(outlier.colour = NA) +
         ggplot2::geom_point(ggplot2::aes(colour = metric), alpha = 0.2) +
-        theme_bw() +
-        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
         ggplot2::facet_wrap(~metric, scales = "free") +
         ggplot2::ggtitle(title)
 }
@@ -439,8 +439,8 @@ ggMetricsPos <- function(STORM, title){
     ggplot2::ggplot(tmpDT) +
         ggplot2::geom_point(ggplot2::aes(x = tmpDT$pos, y = tmpDT$score, colour = tmpDT$gene), alpha = 0.2) +
         ggplot2::facet_grid(tmpDT$metric~tmpDT$set, scales = "free") +
-        theme_bw() +
-        theme(axis.text.x = ggplot2::element_blank()) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(axis.text.x = ggplot2::element_blank()) +
         ggplot2::ggtitle(title) + ggplot2::xlab("txCoor")
 }
 
@@ -455,7 +455,9 @@ hlp_start_CALLS <- function(STORM){
 
 # Assign scores to respective RNAmods in STORM$CALLS
 hlp_assign_scores <- function(STORM, RNAmod, scores){
-    tmp <- STORM$RES %>% tidyr::pivot_wider(names_from = metric, values_from = score) %>% data.table
+    tmp <- STORM$RES %>%
+        tidyr::pivot_wider(names_from = metric, values_from = score) %>%
+        data.table::data.table
     selVars <- c(storm_baseCols, scores)
     tmp <- tmp[,names(tmp) %in% selVars, with = FALSE]
     tmp <- split(tmp, tmp$set)
