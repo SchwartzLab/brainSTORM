@@ -2,8 +2,8 @@
 
 SSIIIandTGIRT_metrics <- function(STORM){
     STORM %>%
-        add_Y_metrics %>%
         add_Nm_metrics %>%
+        add_Y_metrics %>%
         add_ac4C_metrics %>%
         add_m1A_metrics %>%
         add_m7G_metrics %>%
@@ -101,8 +101,8 @@ add_SRD1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
     sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
-        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+        id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- add_StartRate_1bpDS(STORM$DATA[[id_A]])
@@ -112,7 +112,7 @@ add_SRD1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
         names(tmpRES) <- c("set", "metric", "score")
         tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                                  "txcoor", "pos", "refSeq")], tmpRES)
-        tmpRES[!(tmpRES$refSeq %in% tmpRES$onNucs), "score"] <- NA
+        tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
     STORM$RES <- hlpr_add_REScols(STORM$RES, OUT)
@@ -128,8 +128,8 @@ add_SRlog2FCh1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
     sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
-        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+        id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- add_StartRate_1bpDS(STORM$DATA[[id_A]], minCov = minCov)
@@ -155,8 +155,8 @@ add_SRD <- function(STORM, group_A, group_B, newColName = "auto",
     sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
-        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+        id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- add_StartRate(STORM$DATA[[id_A]])
@@ -188,8 +188,8 @@ add_2OmeScore <- function(STORM,
                       STORM$META[STORM$META$group == lib_HighdNTPs,]$set)
     if(length(sets) == 0){stop("No sets found with both lib_LowdNTPs and lib_HighdNTPs label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == lib_LowdNTPs]$id
-        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == lib_HighdNTPs]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == lib_LowdNTPs,]$id
+        id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == lib_HighdNTPs,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT <- detect_2OmeScore(DT_low = STORM$DATA[[id_A]],
@@ -227,8 +227,8 @@ add_MRD <- function(STORM, group_A, group_B, newColName = "auto",
     sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
-        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+        id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- STORM$DATA[[id_A]] %>% add_diffNucToRefRatio()
@@ -254,8 +254,8 @@ add_CytPer <- function(STORM, group_A, group_B, newColName = "auto",
     sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
-        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+        id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- STORM$DATA[[id_A]] %>% detect_m5C()
@@ -280,7 +280,7 @@ add_SR_1bpDS <- function(STORM, group_A, newColName = "auto", onNucs = c("A", "C
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         DT_A <- add_StartRate_1bpDS(STORM$DATA[[id_A]])
         tmpRES <- data.table::data.table(DT_A$startRate_1bpDS)
@@ -303,7 +303,7 @@ add_MR <- function(STORM, group_A, newColName = "auto", onNucs = c("A", "C", "G"
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         DT_A <- add_diffNucToRefRatio(STORM$DATA[[id_A]])
         tmpRES <- data.table::data.table(DT_A$diffToRef_Ratio)
@@ -327,7 +327,7 @@ storm_add_scoreA3p <- function(STORM, group_A, newColName = "auto",
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with group_A label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
         DT_A <- add_scoreA_3p(STORM$DATA[[id_A]], minMedEnv = minMedCov)
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         tmpRES <- data.table::data.table(DT_A$scoreA_3p)
@@ -351,7 +351,7 @@ storm_add_scoreA5p <- function(STORM, group_A, newColName = "auto",
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         DT_A <- add_scoreA_5p(STORM$DATA[[id_A]], minMedEnv = minMedCov)
         tmpRES <- data.table::data.table(DT_A$scoreA_5p)
@@ -492,8 +492,8 @@ add_CtoT_MRD <- function(STORM, group_A, group_B, newColName = "auto",
     sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
-        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+        id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
         if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- STORM$DATA[[id_A]] %>% detect_ac4C()
