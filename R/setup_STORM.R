@@ -1,16 +1,17 @@
 #' STORM META constructor from RDS file names
 #'
-#' @param DTfiles
 #' @param varsList
 #' @param groupVars
 #' @param setVars
 #' @param idVars
+#' @param fileNames
+#' @param outDir
 #'
 #' @return
 #' @export
 #'
 #' @examples
-storm_META <- function(fileNames, varsList, groupVars, setVars, idVars){
+storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
     if(magrittr::not("libTreat" %in% names(varsList))){
         stop("libTreat must be one of the element names in varsList argument")
     }
@@ -35,6 +36,12 @@ storm_META <- function(fileNames, varsList, groupVars, setVars, idVars){
     if(sum(duplicated(paste(DT$group, DT$set)))){
         warning("Combinations of group and set should be unique between samples")
     }
+    rootNames <- DT$FASTQ %>% lapply(function(x){strsplit(x, split = "/") %>%
+            unlist %>% tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
+    BAM <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.bam"))
+    RDS <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.txDT.rds"))
+    DT <- tibble::add_column(.data = DT, .after = "FASTQ", BAM = BAM) %>%
+    tibble::add_column(.after = "BAM", RDS = RDS)
     return(DT)
 }
 
