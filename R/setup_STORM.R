@@ -17,7 +17,7 @@ storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
     DT$set <- data.frame(DT[, setVars, with = FALSE]) %>%
         apply(MARGIN = 1, function(x){paste(x, collapse= ".")}) %>% factor()
     DT$id <- data.frame(DT[, idVars, with = FALSE]) %>%
-        apply(MARGIN = 1, function(x){paste(x, collapse= ".")}) %>% factor()
+        apply(MARGIN = 1, function(x){paste(x, collapse= ".")}) %>% as.character()
     if(sum(duplicated(DT$id)) !=0){
         warning("Generated ids are not unique per sample")
     }
