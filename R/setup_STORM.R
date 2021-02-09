@@ -1,16 +1,4 @@
-#' STORM META constructor from RDS file names
-#'
-#' @param varsList
-#' @param groupVars
-#' @param setVars
-#' @param idVars
-#' @param fileNames
-#' @param outDir
-#'
-#' @return
-#' @export
-#'
-#' @examples
+# STORM META constructor from RDS file names
 storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
     if(magrittr::not("libTreat" %in% names(varsList))){
         stop("libTreat must be one of the element names in varsList argument")
