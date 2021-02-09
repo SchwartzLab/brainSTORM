@@ -98,21 +98,21 @@ add_SRD1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("SRD1bpDS", group_A, group_B, sep = "_")
     }
-    sets <- intersect(STORM$META[group == group_A,]$set, STORM$META[group == group_B,]$set)
+    sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet,][group == group_A]$id
-        id_B <- STORM$META[set == iSet,][group == group_B]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        if(isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
+        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- add_StartRate_1bpDS(STORM$DATA[[id_A]])
         DT_B <- add_StartRate_1bpDS(STORM$DATA[[id_B]])
-        tmpRES <- data.table(DT_A$startRate_1bpDS - DT_B$startRate_1bpDS)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$startRate_1bpDS - DT_B$startRate_1bpDS)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
-        tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
+        tmpRES[!(tmpRES$refSeq %in% tmpRES$onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
     STORM$RES <- hlpr_add_REScols(STORM$RES, OUT)
@@ -125,19 +125,19 @@ add_SRlog2FCh1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("SRlog2FCh1bpDS", group_A, group_B, sep = "_")
     }
-    sets <- intersect(STORM$META[group == group_A,]$set, STORM$META[group == group_B,]$set)
+    sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet,][group == group_A]$id
-        id_B <- STORM$META[set == iSet,][group == group_B]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        if(isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
+        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- add_StartRate_1bpDS(STORM$DATA[[id_A]], minCov = minCov)
         DT_B <- add_StartRate_1bpDS(STORM$DATA[[id_B]], minCov = minCov)
-        tmpRES <- data.table(log2(DT_A$startRate_1bpDS / DT_B$startRate_1bpDS))
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(log2(DT_A$startRate_1bpDS / DT_B$startRate_1bpDS))
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -152,19 +152,19 @@ add_SRD <- function(STORM, group_A, group_B, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("SRD", group_A, group_B, sep = "_")
     }
-    sets <- intersect(STORM$META[group == group_A,]$set, STORM$META[group == group_B,]$set)
+    sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet,][group == group_A]$id
-        id_B <- STORM$META[set == iSet,][group == group_B]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        if(isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
+        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- add_StartRate(STORM$DATA[[id_A]])
         DT_B <- add_StartRate(STORM$DATA[[id_B]])
-        tmpRES <- data.table(DT_A$startRatio - DT_B$startRatio)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$startRatio - DT_B$startRatio)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -184,20 +184,21 @@ add_2OmeScore <- function(STORM,
     if(newColName == "auto"){
         newColName <- paste("NmStopScore", lib_LowdNTPs, lib_HighdNTPs, sep = "_")
     }
-    sets <- intersect(STORM$META[group == lib_LowdNTPs,]$set, STORM$META[group == lib_HighdNTPs,]$set)
+    sets <- intersect(STORM$META[STORM$META$group == lib_LowdNTPs,]$set,
+     STORM$META[STORM$META$group == lib_HighdNTPs,]$set)
     if(length(sets) == 0){stop("No sets found with both lib_LowdNTPs and lib_HighdNTPs label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet,][group == lib_LowdNTPs]$id
-        id_B <- STORM$META[set == iSet,][group == lib_HighdNTPs]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        if(isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == lib_LowdNTPs]$id
+        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == lib_HighdNTPs]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT <- detect_2OmeScore(DT_low = STORM$DATA[[id_A]],
                                DT_high = STORM$DATA[[id_B]],
                                neighFlankSize = neighFlankSize)
-        tmpRES <- data.table(twoOme_score = DT$twoOme_score)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(twoOme_score = DT$twoOme_score)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT[,c("chr", "gencoor", "strand", "gene",
                                    "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -223,19 +224,19 @@ add_MRD <- function(STORM, group_A, group_B, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("MRD", group_A, group_B, sep = "_")
     }
-    sets <- intersect(STORM$META[group == group_A,]$set, STORM$META[group == group_B,]$set)
+    sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet,][group == group_A]$id
-        id_B <- STORM$META[set == iSet,][group == group_B]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        if(isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
+        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- STORM$DATA[[id_A]] %>% add_diffNucToRefRatio()
         DT_B <- STORM$DATA[[id_B]] %>% add_diffNucToRefRatio()
-        tmpRES <- data.table(DT_A$diffToRef_Ratio - DT_B$diffToRef_Ratio)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$diffToRef_Ratio - DT_B$diffToRef_Ratio)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -250,19 +251,19 @@ add_CytPer <- function(STORM, group_A, group_B, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("CytPer", group_A, group_B, sep = "_")
     }
-    sets <- intersect(STORM$META[group == group_A,]$set, STORM$META[group == group_B,]$set)
+    sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet,][group == group_A]$id
-        id_B <- STORM$META[set == iSet,][group == group_B]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        if(isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
+        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- STORM$DATA[[id_A]] %>% detect_m5C()
         DT_B <- STORM$DATA[[id_B]] %>% detect_m5C()
-        tmpRES <- data.table(DT_A$det_m5C - (1 - DT_B$det_m5C))
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$det_m5C - (1 - DT_B$det_m5C))
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -276,16 +277,16 @@ add_SR_1bpDS <- function(STORM, group_A, newColName = "auto", onNucs = c("A", "C
     if(newColName == "auto"){
         newColName <- paste("StartRate1bpDS", group_A, sep = "_")
     }
-    sets <- STORM$META[group == group_A,]$set
+    sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet & group == group_A]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         DT_A <- add_StartRate_1bpDS(STORM$DATA[[id_A]])
-        tmpRES <- data.table(DT_A$startRate_1bpDS)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$startRate_1bpDS)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -299,16 +300,16 @@ add_MR <- function(STORM, group_A, newColName = "auto", onNucs = c("A", "C", "G"
     if(newColName == "auto"){
         newColName <- paste("MissIncRate", group_A, sep = "_")
     }
-    sets <- STORM$META[group == group_A,]$set
+    sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet & group == group_A]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         DT_A <- add_diffNucToRefRatio(STORM$DATA[[id_A]])
-        tmpRES <- data.table(DT_A$diffToRef_Ratio)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$diffToRef_Ratio)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -323,16 +324,16 @@ storm_add_scoreA3p <- function(STORM, group_A, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("ScoreA3p", group_A, sep = "_")
     }
-    sets <- STORM$META[group == group_A,]$set
+    sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with group_A label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet & group == group_A]$id
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
         DT_A <- add_scoreA_3p(STORM$DATA[[id_A]], minMedEnv = minMedCov)
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        tmpRES <- data.table(DT_A$scoreA_3p)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        tmpRES <- data.table::data.table(DT_A$scoreA_3p)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -347,16 +348,16 @@ storm_add_scoreA5p <- function(STORM, group_A, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("ScoreA5p", group_A, sep = "_")
     }
-    sets <- STORM$META[group == group_A,]$set
+    sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet & group == group_A]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
         DT_A <- add_scoreA_5p(STORM$DATA[[id_A]], minMedEnv = minMedCov)
-        tmpRES <- data.table(DT_A$scoreA_5p)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$scoreA_5p)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[, c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[, c("chr", "gencoor", "strand", "gene",
                                       "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
@@ -373,14 +374,14 @@ detect_m5C <- function(DT){
 
 # Function for cytidine persistence to Bisulphite treatment
 detect_ac4C <- function(DT){
-    DT <- data.table(DT)
+    DT <- data.table::data.table(DT)
     tmp <- round(DT$`T` / (DT$`T` + DT$`C`), 6)
     tibble::add_column(DT, det_ac4C = tmp)
 }
 
 # Add column of Different Nucleotide to reference ratio, diffToRef and nucTotal columns are required
 add_diffNucToRefRatio <- function(DT){
-    DT <- tx_add_diffNucToRef(DT) %>% tx_add_nucTotal()
+    DT <- txtools::tx_add_diffNucToRef(DT) %>% txtools::tx_add_nucTotal()
     tmp <- round(DT$diffToRef / DT$nucTotal, 6)
     tibble::add_column(DT, diffToRef_Ratio = tmp)
 }
@@ -396,11 +397,11 @@ add_StartRate <- function(DT, minCov = 50){
 add_StartRate_1bpDS <- function(DT, minCov = 50){
     tmp <- (DT$start_5p + 1) / (DT$cov + 1)
     tmp[DT$cov < minCov] <- NA
-    DTL <- tibble::add_column(DT, startRate_1bpDS = tmp) %>% tx_split_DT()
+    DTL <- tibble::add_column(DT, startRate_1bpDS = tmp) %>% txtools::tx_split_DT()
     DT <- lapply(DTL, function(DT){
-        DT$startRate_1bpDS <- c(tail(DT$startRate_1bpDS, -1), NA)
+        DT$startRate_1bpDS <- c(utils::tail(DT$startRate_1bpDS, -1), NA)
         DT
-    }) %>% tx_merge_DT()
+    }) %>% txtools::tx_merge_DT()
     return(DT)
 }
 
@@ -408,11 +409,11 @@ add_StartRate_1bpDS <- function(DT, minCov = 50){
 add_StartRate_1bpDS_pc <- function(DT, minCov = 50, pc = 0.01){
     tmp <- (DT$start_5p + pc) / (DT$cov + pc)
     tmp[DT$cov < minCov] <- NA
-    DTL <- tibble::add_column(DT, startRate_1bpDS_pc = tmp) %>% tx_split_DT()
+    DTL <- tibble::add_column(DT, startRate_1bpDS_pc = tmp) %>% txtools::tx_split_DT()
     DT <- lapply(DTL, function(DT){
-        DT$startRate_1bpDS_pc <- c(tail(DT$startRate_1bpDS_pc, -1), NA)
+        DT$startRate_1bpDS_pc <- c(utils::tail(DT$startRate_1bpDS_pc, -1), NA)
         DT
-    }) %>% tx_merge_DT()
+    }) %>% txtools::tx_merge_DT()
     return(DT)
 }
 
@@ -423,12 +424,12 @@ detect_2OmeScore <- function(DT_low, DT_high, neighFlankSize = 5, minCov = 50){
     if(all(union(DT_low$gene, DT_high$gene) %in% intersect(DT_low$gene, DT_high$gene))){
         iGenes <- intersect(DT_low$gene, DT_high$gene)
     }else{stop("DT_low and DT_high do not share the same genes")}
-    DTL1 <- DT_low %>% tx_split_DT()
-    DTL2 <- DT_high %>% tx_split_DT()
+    DTL1 <- DT_low %>% txtools::tx_split_DT()
+    DTL2 <- DT_high %>% txtools::tx_split_DT()
     OUT <- lapply(iGenes, function(iG){
 
-        RES <- data.table(DTL1[[iG]][,colnames(DTL1[[iG]]) %in% storm_baseCols, with = FALSE])
-        tmpSR <- c(tail(DTL1[[iG]]$start_Ratio / DTL2[[iG]]$start_Ratio, -1), NA)
+        RES <- data.table::data.table(DTL1[[iG]][,colnames(DTL1[[iG]]) %in% storm_baseCols, with = FALSE])
+        tmpSR <- c(utils::tail(DTL1[[iG]]$start_Ratio / DTL2[[iG]]$start_Ratio, -1), NA)
         sc_range <- (1+neighFlankSize):(nrow(DTL1[[iG]])-neighFlankSize)
         score <- rep(NA, nrow(DTL1[[iG]]))
         for(i in sc_range){
@@ -448,11 +449,11 @@ scoreA <- function(CHR, d = 6, minMedEnv = 15){
         ePos <- CHR[P]
         leftFlank <- CHR[(P-d):(P-1)]
         rightFlank <- CHR[(P+1):(P+d)]
-        if( min(median(c(rightFlank, leftFlank), na.rm = T)) < minMedEnv ){next()}
+        if(min(stats::median(c(rightFlank, leftFlank), na.rm = T)) < minMedEnv ){next()}
         m1 <- mean(leftFlank)
         m2 <- mean(rightFlank)
-        sd1 <- sd(leftFlank)
-        sd2 <- sd(rightFlank)
+        sd1 <- stats::sd(leftFlank)
+        sd2 <- stats::sd(rightFlank)
         scoreA[P] <- 1 - (((2 * ePos) + 1) /
                               ((0.5*abs(m1-sd1)) + ePos + (0.5*abs(m2-sd2)) + 1))
     }
@@ -462,24 +463,24 @@ scoreA <- function(CHR, d = 6, minMedEnv = 15){
 
 # Adding score A to multiGene DT
 add_scoreA_3p <- function(DT, minMedEnv = 15, nCores = 1){
-    DTL <- tx_split_DT(DT)
+    DTL <- txtools::tx_split_DT(DT)
     parallel::mclapply(mc.cores = nCores, DTL, function(x){
         tmp <- scoreA(x$end_3p, minMedEnv = minMedEnv)
         tibble::add_column(x, scoreA_3p = tmp)
-    }) %>% tx_merge_DT()
+    }) %>% txtools::tx_merge_DT()
 }
 
 # Adding score A 5p_ends to multiGene DT
 add_scoreA_5p <- function(DT, minMedEnv = 15, nCores = 1){
-    DTL <- tx_split_DT(DT)
+    DTL <- txtools::tx_split_DT(DT)
     parallel::mclapply(mc.cores = nCores, DTL, function(x){
         if(!("startRate_1bpDS" %in% names(x))){
             x <- add_StartRate_1bpDS(x)
         }
         tmp <- scoreA(x$start_5p, minMedEnv = minMedEnv)
-        tmp <- c(tail(tmp, -1), NA)
+        tmp <- c(utils::tail(tmp, -1), NA)
         tibble::add_column(x, scoreA_5p = tmp)
-    }) %>% tx_merge_DT()
+    }) %>% txtools::tx_merge_DT()
 }
 
 # Add C->T misincorporation difference (CtoT_MRD) to STORM object
@@ -488,19 +489,19 @@ add_CtoT_MRD <- function(STORM, group_A, group_B, newColName = "auto",
     if(newColName == "auto"){
         newColName <- paste("CtoT.MRD", group_A, group_B, sep = "_")
     }
-    sets <- intersect(STORM$META[group == group_A,]$set, STORM$META[group == group_B,]$set)
+    sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
     if(length(sets) == 0){stop("No sets found with both group_A and group_B label")}
     OUT <- lapply(sets, function(iSet){
-        id_A <- STORM$META[set == iSet,][group == group_A]$id
-        id_B <- STORM$META[set == iSet,][group == group_B]$id
-        if(isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
-        if(isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
+        id_A <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_A]$id
+        id_B <- STORM$META[STORM$META$set == iSet,][STORM$META$group == group_B]$id
+        if(S4Vectors::isEmpty(id_A)){stop(group_A, " not found in STORM object META data")}
+        if(S4Vectors::isEmpty(id_B)){stop(group_B, " not found in STORM object META data")}
         DT_A <- STORM$DATA[[id_A]] %>% detect_ac4C()
         DT_B <- STORM$DATA[[id_B]] %>% detect_ac4C()
-        tmpRES <- data.table(DT_A$det_ac4C - DT_B$det_ac4C)
-        tmpRES <- data.table(iSet, newColName, tmpRES)
+        tmpRES <- data.table::data.table(DT_A$det_ac4C - DT_B$det_ac4C)
+        tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
-        tmpRES <- data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+        tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
                                      "txcoor", "pos", "refSeq")], tmpRES)
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)

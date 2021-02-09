@@ -13,7 +13,7 @@ rmTmpDir <- function(){
 # Create temporal bisulphite genome
 bisGenome <- function(fastaGenome){
     mkTmpDir()
-    outName <- paste0(strsplit(fastaGenome, split = "/") %>% unlist %>% tail(1),
+    outName <- paste0(strsplit(fastaGenome, split = "/") %>% unlist %>% utils::tail(1),
                       ".bisulp")
     out_name <- file.path(getwd(), "STORMtmp_dir", outName)
     gen <- Biostrings::readDNAStringSet(fastaGenome)
@@ -33,15 +33,15 @@ mkGTF <- function(bedAnnotation, outName = NULL, source = "user"){
                   bedAnnotation, " /dev/stdout | /apps/RH7U2/general/",
                   "kentUtils/v377/bin/genePredToGtf file /dev/stdin ", outName)
     system(com)
-    tmp <- read.delim(outName, header = FALSE)
+    tmp <- utils::read.delim(outName, header = FALSE)
     tmp[,2] <- source
-    write.table(tmp, file = outName, quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+    utils::write.table(tmp, file = outName, quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
 }
 
 # STAR genome generator
 mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
                          nCores = 2, maxReadLength = 101){
-    outName <- paste0(strsplit(fastaGenome, split = "/") %>% unlist %>% tail(1),
+    outName <- paste0(strsplit(fastaGenome, split = "/") %>% unlist %>% utils::tail(1),
                       ".STAR")
     if(is.null(outDir)){
         mkTmpDir()
@@ -68,7 +68,7 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
                      "--genomeSAindexNbases", genomeindexNb)
         system(com)
     }else{
-        tmpF <- tempfile() %>% strsplit(split = "/") %>% unlist %>% tail(1)
+        tmpF <- tempfile() %>% strsplit(split = "/") %>% unlist %>% utils::tail(1)
         tmpGTF <- file.path(getwd(), "STORMtmp_dir", tmpF)
         mkGTF(bedAnnotation, tmpGTF)
         com <- paste("/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",

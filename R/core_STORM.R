@@ -14,7 +14,7 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
     # Check yieldSize to be integer
     txtools:::check_integer_arg(ySize, "ySize")
     # Set OUTPUT filename
-    outName <- strsplit(BAMfile, split = "/") %>% unlist %>% tail(1) %>%
+    outName <- strsplit(BAMfile, split = "/") %>% unlist %>% utils::tail(1) %>%
         gsub(x = ., pattern = ".bam$", replacement = ".txDT.rds", perl = T)
     if(!(dtType == "cov" | dtType == "covNuc")){
         stop("-d parameter is neither 'cov', nor 'covNuc'")
@@ -45,7 +45,7 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
                                  minReads = minR,
                                  withSeq = lSeq,
                                  verbose = verb)
-    GenomicAlignments::width(txReads) %>% lapply(function(x) quantile(x, 0.99))
+    GenomicAlignments::width(txReads) %>% lapply(function(x) stats::quantile(x, 0.99))
     # Filter by length
     if(!is.na(remL)){
         txReads <- txtools::tx_filter_maxWidth(x = txReads, thr = remL, nCores = nCores)
@@ -81,7 +81,7 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
     timeBam <- t1 - t0 # Total time taken
     timePrc <- t2 - t1 # Total time taken
     timeTot <- t2 - t0 # Total time taken
-    reportName <- strsplit(BAMfile, split = "/") %>% unlist %>% tail(1) %>%
+    reportName <- strsplit(BAMfile, split = "/") %>% unlist %>% utils::tail(1) %>%
         gsub(x = ., pattern = ".bam$", replacement = ".txDT.log", perl = T)
     readsInOut <- parallel::mclapply(mc.cores = nCores, txReads, names) %>% unlist
     uniqReadsInOut <- unique(readsInOut)
@@ -96,7 +96,7 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
                 "Processing time:", paste(round(timePrc, 2), units(timePrc), sep = " "),
                 "Total time taken:", paste(round(timeTot, 2), units(timeTot), sep = " ")) %>%
         matrix(ncol = 2, byrow =T)
-    write.table(x = report,
+    utils::write.table(x = report,
                 file = file.path(outDir, reportName),
                 sep = "\t",
                 quote = FALSE,

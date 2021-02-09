@@ -94,7 +94,7 @@ rdsFiles <- parallel::mclapply(mc.cores = nCores, seq_along(META$FASTQ), functio
 
 # Lib Complexity 
 libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
-ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt", speciesName = EXP_NAME))
+ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt"), speciesName = EXP_NAME)
 
 # Nucleotide frequency
 nucF_Pa <- fastq_nucFreq(META, nCores,firstN =  1e5)

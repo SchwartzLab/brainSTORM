@@ -37,7 +37,7 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     logFiles <- file.path("STORMtmp_dir", paste0(rootNames, "_Log.final.out"))
     # all(file.exists(logFiles))
     RES <- lapply(logFiles, function(x){
-        read.delim(file = x, header = FALSE, stringsAsFactors = FALSE)
+        utils::read.delim(file = x, header = FALSE, stringsAsFactors = FALSE)
     })
     # Merge in one table
     summary <- lapply(seq_along(RES), function(x){
@@ -49,10 +49,10 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     if(file.exists(outReport)){ # Add columns to existing summary report
         tmp <- data.table::fread(outReport, header = TRUE) %>%
             tibble::column_to_rownames("V1")
-        write.table(x = cbind(tmp, summary), file = outReport,
+        utils::write.table(x = cbind(tmp, summary), file = outReport,
                     sep = "\t", quote = F, col.names = NA)
     }else{
-        write.table(x = summary, file = outReport, sep = "\t", quote = F,
+        utils::write.table(x = summary, file = outReport, sep = "\t", quote = F,
                     col.names = NA)
     }
     # Sort and index with samtools
@@ -88,7 +88,7 @@ storm_STORM <- function(META, genome = NULL, geneAnnot = NULL, nCores = 1){
     DTL <- lapply(META$RDS, function(x) readRDS(x)) # load RDS files
     # Check if data is in data.table or list format
     if(all(lapply(DTL, class) %>% unlist %>% magrittr::equals("data.frame"))){
-        DTL <- lapply(DTL, data.table) %>% magrittr::set_names(META$id)
+        DTL <- lapply(DTL, data.table::data.table) %>% magrittr::set_names(META$id)
     }else if(all(lapply(DTL, class) %>% unlist %>% magrittr::equals("list"))){
         DTL <- lapply(DTL, function(x){
             do.call(x, what = rbind) %>% data.table::data.table()
@@ -101,9 +101,9 @@ storm_STORM <- function(META, genome = NULL, geneAnnot = NULL, nCores = 1){
     }
     if(sum(reqRefSeq) > 0){
         DTL[reqRefSeq] <- parallel::mclapply(mc.cores = nCores, DTL[reqRefSeq], function(DT){
-            txtools::tx_split_DT(DT) %>% lapply(function(x){
+            txtools::txtools::tx_split_DT(DT) %>% lapply(function(x){
                 txtools::tx_add_refSeqDT(DT = x, genome = genome, geneAnnot = geneAnnot)
-            }) %>% txtools::tx_merge_DT()
+            }) %>% txtools::txtools::tx_merge_DT()
         })
     }
     # Check uniformity of DTs, if unequal equalize
@@ -143,20 +143,20 @@ storm_summary <- function(STORM){
         }else{
             tmp_log <- lapply(SETS, function(x){
                 STORM$CALLS[[x]][[RNAmod_i]]$logist_Score
-            }) %>% do.call(what = cbind) %>% set_colnames(paste("logScore",
+            }) %>% do.call(what = cbind) %>% magrittr::set_colnames(paste("logScore",
                                                                 SETS, sep = "_"))
             tmp_lin <- lapply(SETS, function(x){
                 STORM$CALLS[[x]][[RNAmod_i]]$linear_Score
-            }) %>% do.call(what = cbind) %>% set_colnames(paste("linScore",
+            }) %>% do.call(what = cbind) %>% magrittr::set_colnames(paste("linScore",
                                                                 SETS, sep = "_"))
             tmp_prd <- lapply(SETS, function(x){
                 STORM$CALLS[[x]][[RNAmod_i]]$pred
-            }) %>% do.call(what = cbind) %>% set_colnames(paste("pred",
+            }) %>% do.call(what = cbind) %>% magrittr::set_colnames(paste("pred",
                                                                 SETS, sep = "_"))
             tmp_out <- cbind(tmp_out, tmp_lin, tmp_log, tmp_prd)
             return(tmp_out)
         }
-    }) %>% set_names(RNAmods)
+    }) %>% magrittr::set_names(RNAmods)
     STORM$SUMMARY <- OUT
     STORM
 }
@@ -173,7 +173,6 @@ hlpr_add_REScols <- function(STORM_RES, REScols){
     STORM_RES
 }
 
-
 # List files in work dir that match pattern pat
 listFilePatt <- function(pattern, path = "."){
     files <- list.files(path)[grep(pattern = pattern, x = list.files(path))]
@@ -184,11 +183,8 @@ listFilePatt <- function(pattern, path = "."){
 # Notebook 1 ###################################################################
 
 # Tables of files from FASTQ to expected BAM and RDS targets
-files_table <- function(META, outDir){
+files_table <- function(META){
     fastq <- META$FASTQ
-    if(!"BAM" %in% colnames(META)){
-        META <- addBAMFileNames(META, outDir)
-    }
     bam <- META$BAM
     lce <- gsub(pattern = "Aligned.out.sorted.bam",
                 replacement = "Aligned.out.sorted.lce.txt", META$BAM)
@@ -207,7 +203,7 @@ files_table <- function(META, outDir){
 
 # FASTQ Duplication rate (library complexity)
 fastq_dupRate <- function(FASTQs_pahts, nCores){
-    mclapply(mc.cores = nCores, FASTQs_pahts, function(file){
+    parallel::mclapply(mc.cores = nCores, FASTQs_pahts, function(file){
         tmp <- ShortRead::readFastq(file)
         tmp2 <- ShortRead::readFastq(gsub(file, pattern = "R1", replacement = "R2"))
         dupR <- paste(tmp@sread, tmp2@sread, sep = "") %>% duplicated() %>% mean
@@ -225,14 +221,14 @@ fastq_nucFreq <- function(META, nCores, firstN = 1e4){
         mR1R2 <- paste(tmp, tmp2, sep = "")
         nucFreq <- mR1R2 %>% stringr::str_split(pattern = "") %>% unlist %>% table
         return(nucFreq[c("A", "C", "G", "T")])
-    }) %>% do.call(what = cbind) %>% magrittr::set_colnames(META$id)
+    }) %>% do.call(what = cbind) %>% magrittr::magrittr::set_colnames(META$id)
 }
 
 ## ggplot nucleotide frequency barplots
 gg_nucFreq <- function(nucF_x, subtitle){
     tmp <- prop.table(nucF_x, margin = 2) %>% data.frame %>% tibble::rownames_to_column(var = "nuc") %>%
         tidyr::pivot_longer(cols = -nuc, names_to = "Sample", values_to = "Ratio")
-    ggplot2::ggplot(tmp, ggplot2::aes(x = Sample, y = Ratio, fill = nuc)) +
+    ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$Sample, y = tmp$Ratio, fill = tmp$nuc)) +
         ggplot2::geom_bar(stat = "identity") +
         ggplot2::scale_fill_brewer(palette="Set1") +
         ggplot2::theme_minimal() +
@@ -276,7 +272,7 @@ gg_readStats <- function(rReport, species){
                                  cols = c("FASTQ", "BAM", "txDT"), names_to = "Reads")
     tmpDT$Reads <- factor(tmpDT$Reads, levels = c("FASTQ", "BAM", "txDT"))
     tmpDT$value <- magrittr::divide_by(tmpDT$value, 1e6)
-    t_GG1 <- ggplot2::ggplot(tmpDT, ggplot2::aes(x = sample, y = value, fill = Reads)) +
+    t_GG1 <- ggplot2::ggplot(tmpDT, ggplot2::aes(x = tmpDT$sample, y = tmpDT$value, fill = tmpDT$Reads)) +
         ggplot2::geom_bar(stat="identity") +
         ggplot2::theme_minimal() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
@@ -309,31 +305,31 @@ gg_readStats <- function(rReport, species){
 # Alignment and transcript data processing efficiency
 ggAlignEffPlot <- function(META, rReport){
     tmp <- cbind(META, rReport[,-1])
-    tmpGG1 <- ggplot(tmp, aes(x = libTreat, y = pC_BAM, colour = libTreat)) +
-        geom_boxplot() + geom_point(colour = "black") +
-        ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
-        ylab("% Aligned reads") +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
-    tmpGG2 <- ggplot(tmp, aes(x = bioTreat, y = pC_BAM, colour = bioTreat)) +
-        geom_boxplot() + geom_point(colour = "black") +
-        ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
-        ylab("% Aligned reads") +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
-    tmpGG3 <- ggplot(tmp, aes(x = RTase, y = pC_BAM, colour = RTase)) +
-        geom_boxplot() + geom_point(colour = "black") +
-        ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
-        ylab("% Aligned reads") +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    tmpGG1 <- ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$libTreat, y = tmp$pC_BAM, colour = tmp$libTreat)) +
+        ggplot2::geom_boxplot() + ggplot2::geom_point(colour = "black") +
+        ggplot2::ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
+        ggplot2::ylab("% Aligned reads") +
+        ggplot2::theme_minimal() +
+        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+    tmpGG2 <- ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$bioTreat, y = tmp$pC_BAM, colour = tmp$bioTreat)) +
+        ggplot2::geom_boxplot() + ggplot2::geom_point(colour = "black") +
+        ggplot2::ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
+        ggplot2::ylab("% Aligned reads") +
+        ggplot2::theme_minimal() +
+        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+    tmpGG3 <- ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$RTase, y = tmp$pC_BAM, colour = tmp$RTase)) +
+        ggplot2::geom_boxplot() + ggplot2::geom_point(colour = "black") +
+        ggplot2::ggtitle(paste(META$organism[1], "- Alignment efficiency")) +
+        ggplot2::ylab("% Aligned reads") +
+        ggplot2::theme_minimal() +
+        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
     list(tmpGG1, tmpGG2, tmpGG3)
 }
 
 # Library complexity extrapolation barplots and tables
 gg_lce <- function(META, tab_name, speciesName = ""){
     lceFiles <- gsub(META$BAM, pattern = ".bam", replacement = ".lce.txt") %>%
-        setNames(META$id)
+        magrittr::set_names(META$id)
     if(!all(file.exists(lceFiles))){
         stop("Report files missing:\n", paste(lceFiles[!file.exists(lceFiles)], collapse = " \n"))
     }
@@ -347,9 +343,9 @@ gg_lce <- function(META, tab_name, speciesName = ""){
     tmpT <- table(tmp$TOTAL_READS)
     e_reads <- names(tmpT)[tmpT == max(tmpT)] %>% as.numeric %>% max
     tmp <- tmp[tmp$TOTAL_READS == e_reads,]
-    ggOUT <- ggplot2::ggplot(tmp, ggplot2::aes(x = id, y = EXPECTED_DISTINCT)) +
+    ggOUT <- ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$id, y = tmp$EXPECTED_DISTINCT)) +
         ggplot2::geom_bar(stat="identity", color="black", position= ggplot2::position_dodge()) +
-        ggplot2::geom_errorbar(ggplot2::aes(ymin=LOWER_0.95CI, ymax=UPPER_0.95CI), width=.2,
+        ggplot2::geom_errorbar(ggplot2::aes(ymin= tmp$LOWER_0.95CI, ymax= tmp$UPPER_0.95CI), width=.2,
                                position= ggplot2::position_dodge(1)) +
         ggplot2::theme_minimal() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
@@ -364,19 +360,19 @@ gg_lce <- function(META, tab_name, speciesName = ""){
 gg_lceLines <- function(f_tab){
     require(plotly)
     tmp <- lapply(f_tab$lce, fread) %>%
-        set_names(f_tab$id)
+        magrittr::set_names(f_tab$id)
     tmp <- lapply(names(tmp), function(x){
         cbind(tmp[[x]], id = x)
-    }) %>% do.call(what = rbind) %>% data.table()
-    tmpGG <- ggplot(tmp) + geom_line(aes(x = TOTAL_READS,
-                                         y = EXPECTED_DISTINCT,
+    }) %>% do.call(what = rbind) %>% data.table::data.table()
+    tmpGG <- ggplot2::ggplot(tmp) + ggplot2::geom_line(ggplot2::aes(x = tmp$TOTAL_READS,
+                                         y = tmp$EXPECTED_DISTINCT,
                                          colour = id)) +
-        geom_ribbon(aes(x = TOTAL_READS,
-                        y = EXPECTED_DISTINCT,
-                        ymin=LOWER_0.95CI,
-                        ymax=UPPER_0.95CI,
-                        fill = id),alpha=0.2) + theme_minimal()
-    ggplotly(tmpGG)
+        ggplot2::geom_ribbon(ggplot2::aes(x = tmp$TOTAL_READS,
+                        y = tmp$EXPECTED_DISTINCT,
+                        ymin= tmp$LOWER_0.95CI,
+                        ymax= tmp$UPPER_0.95CI,
+                        fill = tmp$id),alpha=0.2) + ggplot2::theme_minimal()
+    plotly::ggplotly(tmpGG)
 }
 
 # Notebook 2 ###################################################################
@@ -428,30 +424,30 @@ SSIII_metrics <- function(STORM){
 
 # Boxplot of $RES calculated metrics grouping by modified nucleotides
 ggMetricsNuc <- function(STORM, title){
-    tmpDT <- STORM$RES %>% na.omit
-    ggplot(tmpDT, aes(x = nuc, y = score)) + geom_boxplot(outlier.colour = NA) +
-        geom_point(aes(colour = metric), alpha = 0.2) +
+    tmpDT <- STORM$RES %>% stats::na.omit()
+    ggplot2::ggplot(tmpDT, ggplot2::aes(x = nuc, y = score)) + ggplot2::geom_boxplot(outlier.colour = NA) +
+        ggplot2::geom_point(ggplot2::aes(colour = metric), alpha = 0.2) +
         theme_bw() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-        facet_wrap(~metric, scales = "free") +
-        ggtitle(title)
+        theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+        ggplot2::facet_wrap(~metric, scales = "free") +
+        ggplot2::ggtitle(title)
 }
 
 # Plot scatterplot of scores colored by gene by tx coordinate
 ggMetricsPos <- function(STORM, title){
-    tmpDT <- STORM$RES %>% na.omit
-    ggplot(tmpDT) +
-        geom_point(aes(x = pos, y = score, colour = gene), alpha = 0.2) +
-        facet_grid(metric~set, scales = "free") +
+    tmpDT <- STORM$RES %>% stats::na.omit()
+    ggplot2::ggplot(tmpDT) +
+        ggplot2::geom_point(ggplot2::aes(x = tmpDT$pos, y = tmpDT$score, colour = tmpDT$gene), alpha = 0.2) +
+        ggplot2::facet_grid(tmpDT$metric~tmpDT$set, scales = "free") +
         theme_bw() +
-        theme(axis.text.x=element_blank()) +
-        ggtitle(title) + xlab("txCoor")
+        theme(axis.text.x = ggplot2::element_blank()) +
+        ggplot2::ggtitle(title) + ggplot2::xlab("txCoor")
 }
 
 # Initializa STORM$CALLS
 hlp_start_CALLS <- function(STORM){
     STORM$CALLS <- lapply(seq_along(unique(STORM$META$set)), function(x) {
-        lapply(RNAmods_vec, function(x) NULL) %>% set_names(RNAmods_vec)
+        lapply(RNAmods_vec, function(x) NULL) %>% magrittr::set_names(RNAmods_vec)
     })
     names(STORM$CALLS) <- unique(STORM$META$set)
     STORM
@@ -459,7 +455,7 @@ hlp_start_CALLS <- function(STORM){
 
 # Assign scores to respective RNAmods in STORM$CALLS
 hlp_assign_scores <- function(STORM, RNAmod, scores){
-    tmp <- STORM$RES %>% pivot_wider(names_from = metric, values_from = score) %>% data.table
+    tmp <- STORM$RES %>% tidyr::pivot_wider(names_from = metric, values_from = score) %>% data.table
     selVars <- c(storm_baseCols, scores)
     tmp <- tmp[,names(tmp) %in% selVars, with = FALSE]
     tmp <- split(tmp, tmp$set)
@@ -523,7 +519,7 @@ predict_cutpointr <- function(cp_model, newdata){
         }else if(dir[x] == ">="){
             newdata[,pr[x]] >= ocp[x]
         }else{stop("Direction of predictor is not supported")}
-    }) %>% do.call(what = "rbind") %>% colSums() %>% equals(length(pr))
+    }) %>% do.call(what = "rbind") %>% colSums() %>% magrittr::equals(length(pr))
     ifelse(cuts, as.character(cp_model$pos_class[1]), as.character(cp_model$neg_class[1]))
 }
 
@@ -584,16 +580,16 @@ trainLogModel_RNAmods <- function(STORM, isModFun, modNuc, thresholds){
     OUT <- lapply(allCombVar, function(varNames){
         tData <- CALLS[, c(varNames, "isMod")]
         tData$isMod <- as.numeric(tData$isMod)
-        logMod <- glm(isMod ~ ., family = binomial(), data = tData)
+        logMod <- stats::glm(isMod ~ ., family = stats::binomial(), data = tData)
         CALLS$logPred <- stats::predict(logMod, newdata = CALLS, type = "response")
         sapply(thresholds, function(x) MCC(CALLS$logPred, CALLS$isMod, x))
-    }) %>% do.call(what = cbind) %>% set_rownames(thresholds) %>% set_colnames(combNames)
-    selComb <- which.max(colMedians(OUT))
+    }) %>% do.call(what = cbind) %>% magrittr::set_rownames(thresholds) %>% magrittr::set_colnames(combNames)
+    selComb <- which.max(matrixStats::colMedians(OUT))
     selThr <- which.max(OUT[,selComb])
     # FinalModel
     tData <- CALLS[, c(allCombVar[[selComb]], "isMod")]
     tData$isMod <- as.numeric(tData$isMod)
-    logMod <- glm(isMod ~ ., family = binomial(), data = tData)
+    logMod <- stats::glm(isMod ~ ., family = stats::binomial(), data = tData)
     return(list(logiMod = logMod, thr = thresholds[selThr], vars = allCombVar[[selComb]],
                 MCCmat = OUT, MCC= OUT[selThr, selComb]))
 }
@@ -613,9 +609,9 @@ call_RNAmods_logRegMods <- function(STORM, logMods){
             STORM$CALLS[[callList]][[RNAmod]]$pred <-
                 STORM$CALLS[[callList]][[RNAmod]]$logist_Score >= logMods[[RNAmod]]$thr
             return(STORM$CALLS[[callList]][[RNAmod]])
-        }) %>% set_names(names(STORM$CALLS[[callList]]))
+        }) %>% magrittr::set_names(names(STORM$CALLS[[callList]]))
         return(tmp)
-    }) %>% set_names(names(STORM$CALLS))
+    }) %>% magrittr::set_names(names(STORM$CALLS))
     STORM
 }
 
@@ -645,11 +641,11 @@ train_RF_CP <- function(STORM, RNAmodsList, varList){
     CP_models <- lapply(seq_along(RNAmodsList), function(i){
         selVars <- lapply(varList[[i]], function(i){
             grep(pattern = i, x = names(RES), value = TRUE)}) %>% unlist
-        tmpData <- data.frame(set_colnames(RES[, selVars, with = F], varList[[i]]),
+        tmpData <- data.frame(magrittr::set_colnames(RES[, selVars, with = F], varList[[i]]),
                               RNAmod = factor(nucList_Sc[[i]]))
         CPmodel <- lapply(varList[[i]], function(iVar){
-            tmpC <- cutpointr(tmpData[, iVar], tmpData[, "RNAmod"],
-                              method = maximize_metric, metric = sum_sens_spec,
+            tmpC <- cutpointr::cutpointr(tmpData[, iVar], tmpData[, "RNAmod"],
+                              method = cutpointr::maximize_metric, metric = cutpointr::sum_sens_spec,
                               direction = ">=", pos_class = TRUE,
                               use_midpoints = TRUE, na.rm = TRUE)
             tmpC$predictor <- iVar
@@ -660,8 +656,8 @@ train_RF_CP <- function(STORM, RNAmodsList, varList){
     RES[is.na(RES)] <- 0
     RF_models <- lapply(seq_along(varList), function(i){
         selVars <- lapply(varList[[i]], function(i) grep(pattern = i, x = names(RES), value = TRUE)) %>% unlist
-        tmpDat <- RES[, selVars, with = F] %>% set_colnames(varList[[i]])
-        randomForest(x = tmpDat, y = factor(nucList_Sc[[i]]))
+        tmpDat <- RES[, selVars, with = F] %>% magrittr::set_colnames(varList[[i]])
+        randomForest::randomForest(x = tmpDat, y = factor(nucList_Sc[[i]]))
     })
     #CutPointer
     list(RNAmodList = RNAmodsList, RF_models = RF_models, CP_models = CP_models)
@@ -682,10 +678,10 @@ storm_calls <- function(STORM, RNAmodList, RF_list, CP_models){
                     grepl(pattern = iSets[j], names(STORM$RES))
                 tmpDat <- data.frame(x = STORM$RES[[which(selVar)]])
                 CPmod$predictor <- "x"
-                as.logical(predict(CPmod, tmpDat))
+                as.logical(stats::predict(CPmod, tmpDat))
             }) %>% do.call(what = data.frame) %>% unname %>% apply(1, all)
-        }) %>% do.call(what = cbind) %>% data.table() %>%
-            set_names(paste("pred", RNAmods_vec[i], iSets, sep = "_"))
+        }) %>% do.call(what = cbind) %>% data.table::data.table() %>%
+            magrittr::set_names(paste("pred", RNAmods_vec[i], iSets, sep = "_"))
 
         scor_RES <- lapply(seq_along(iSets), function(j){
             lapply(CP_models[[i]], function(CPmod){
@@ -694,7 +690,7 @@ storm_calls <- function(STORM, RNAmodList, RF_list, CP_models){
                     grepl(pattern = iSets[j], names(STORM$RES))
                 STORM$RES[,which(selVar), with = FALSE]
             }) %>% do.call(what = cbind)
-        }) %>% do.call(what = cbind) %>% data.table()
+        }) %>% do.call(what = cbind) %>% data.table::data.table()
 
         tree_RES <- lapply(seq_along(iSets), function(j){
             RF_mod <- RF_list[[i]]
@@ -703,16 +699,16 @@ storm_calls <- function(STORM, RNAmodList, RF_list, CP_models){
                 tmpP <- gsub(pattern = "_TGIRT", replacement = "", x = RF_v)
                 selVar <- grepl(pattern = tmpP, x = names(STORM$RES))
                 selSmp <- grepl(pattern = iSets[j], x = names(STORM$RES)) & selVar
-                newDat <- data.frame(x = STORM$RES[, selSmp, with = FALSE]) %>% set_names(RF_v)
+                newDat <- data.frame(x = STORM$RES[, selSmp, with = FALSE]) %>% magrittr::set_names(RF_v)
             }) %>% do.call(what = cbind)
             newDat[is.na(newDat)] <- 0
-            out <- predict(RF_mod, newDat, norm.votes = TRUE, type = "vote")
+            out <- stats::predict(RF_mod, newDat, norm.votes = TRUE, type = "vote")
             unname(out[,"TRUE"])
-        }) %>% do.call(what = cbind) %>% data.table() %>%
-            set_names(paste("votes", RNAmods_vec[i], iSets, sep = "_"))
+        }) %>% do.call(what = cbind) %>% data.table::data.table() %>%
+            magrittr::set_names(paste("votes", RNAmods_vec[i], iSets, sep = "_"))
 
-        data.table(coorSys, pred_RES, tree_RES, scor_RES)
-    }) %>% set_names(RNAmods_vec)
+        data.table::data.table(coorSys, pred_RES, tree_RES, scor_RES)
+    }) %>% magrittr::set_names(RNAmods_vec)
     return(STORM)
 }
 

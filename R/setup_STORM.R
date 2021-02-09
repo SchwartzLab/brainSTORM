@@ -5,7 +5,7 @@ storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
     }
     DT <- data.table::data.table(FASTQ = fileNames)
     procFileNames <- DT$FASTQ %>% stringr::str_split(pattern = "/") %>%
-        lapply(function(x) tail(x, 1)) %>% unlist
+        lapply(function(x) utils::tail(x, 1)) %>% unlist
     DT <- lapply(names(varsList), function(i){
         patt <- paste0("(", paste(varsList[[i]], collapse = "|"), ")")
         tmp <- stringr::str_extract_all(string = procFileNames, pattern = patt)
@@ -25,7 +25,7 @@ storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
         warning("Combinations of group and set should be unique between samples")
     }
     rootNames <- DT$FASTQ %>% lapply(function(x){strsplit(x, split = "/") %>%
-            unlist %>% tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
+            unlist %>% utils::tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
     BAM <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.bam"))
     RDS <- file.path(outDir, paste0(rootNames, "_Aligned.out.sorted.txDT.rds"))
     DT <- tibble::add_column(.data = DT, .after = "FASTQ", BAM = BAM) %>%
@@ -63,7 +63,7 @@ mkTranscriptome <- function(fastaGenome, bedAnnotation, outFile = "auto", nCores
     seqs <- getGeneSeqsfromGenome(genome = genome, geneAnnot = geneAnnot, nCores)
     if(outFile == "auto"){
         mkTmpDir()
-        fileN <- strsplit(fastaGenome, split = "/") %>% unlist %>% tail(1)
+        fileN <- strsplit(fastaGenome, split = "/") %>% unlist %>% utils::tail(1)
         outFile <- file.path("STORMtmp_dir", paste0(fileN, ".txOme"))
     }
     names(seqs) <- geneAnnot$name
@@ -77,7 +77,7 @@ mkBedFromFastaTxOme <- function(fastaTxOme, outFile = "auto"){
     if(max(Biostrings::width(fa)) > 10000){warning("Maximum sequence length exceeded 10000, make sure sequences represent transcripts.")}
     if(outFile == "auto"){
         mkTmpDir()
-        fileN <- strsplit(fastaTxOme, split = "/") %>% unlist %>% tail(1)
+        fileN <- strsplit(fastaTxOme, split = "/") %>% unlist %>% utils::tail(1)
         outFile <- file.path("STORMtmp_dir", paste0(fileN, ".bed"))
     }
     tmp <- GenomicRanges::GRanges(seqnames = names(fa),
