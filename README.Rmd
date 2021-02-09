@@ -31,7 +31,9 @@ load_all()
 rRNA <- c("PYCC_00363", "PYCC_00364")
 fastaGenome <- "/home/labs/schwartzlab/miguelg/BIGDATA/genome_references/p_occultum/pAbys_txome.fa"
 bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_occultum/pAbys_txome.bed"
-# txBedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_occultum/pAbys_txome_rRNA.bed"
+
+OUTDIR <- "bam_Pa"
+EXP_NAME <- "P. abyssi"
 
 # Transcriptome for bisulphite conversion
 fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = 8)
@@ -54,7 +56,8 @@ META <- storm_META(fileNames = r1Files,
                    varsList = vList,
                    setVars = "bioTreat",
                    idVars = c("organism", "RTase", "libTreat", "bioTreat"),
-                   groupVars = c("libTreat", "RTase"))
+                   groupVars = c("libTreat", "RTase"), 
+                   outDir = OUTDIR)
 
 # STAR Alignment
 alignSTAR(read1Files = META[libTreat != "m5C", FASTQ], 
@@ -63,7 +66,7 @@ alignSTAR(read1Files = META[libTreat != "m5C", FASTQ],
           STARgenomeDir = STARGenome, 
           alignEndsType = "Local", 
           outSAMtype = "BAM Unsorted", 
-          outDir = "bam_Pa")
+          outDir = OUTDIR)
 
 alignSTAR(read1Files = META[libTreat == "m5C", FASTQ], 
           nCores = 8, 
@@ -71,40 +74,47 @@ alignSTAR(read1Files = META[libTreat == "m5C", FASTQ],
           STARgenomeDir = STARGenome_bis, 
           alignEndsType = "Local", 
           outSAMtype = "BAM Unsorted", 
-          outDir = "bam_Pa")
+          outDir = OUTDIR)
 
 # Process all BAM into TxDT
 GENOME <- txtools::tx_load_genome(fastaTxOme)
 TXOME <- txtools::tx_load_bed(bedTxOme)
 TXOME <- TXOME[TXOME$name %in% c("NA_rRNA_1511", "NA_rRNA_1512", "NA_rRNA_1513", "NA_rRNA_1514")]
-rdsFiles <- parallel::mclapply(mc.cores = nCores, META$BAM, function(file){
-    bam2TxDT(BAMfile = file, 
+
+rdsFiles <- parallel::mclapply(mc.cores = nCores, seq_along(META$FASTQ), function(i){
+    bam2TxDT(BAMfile = META$BAM[i], 
              geneAnnot = TXOME, 
              genome = GENOME, 
              dtType = "covNuc", 
-             outDir = "bam_Pa", 
+             outDir = OUTDIR, 
              nCores = 1, 
              remL = 1000, 
              minR = 0)
 }) 
 
 # Lib Complexity 
-META <- addBAMFileNames(META, outDir = "bam_Pa")
 libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
-ggLCE <- gg_lce(META, tab_name = "bam_Pa/libCompReport.txt", speciesName = "P. abyssi")
+ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt", speciesName = EXP_NAME))
 
 # Nucleotide frequency
 nucF_Pa <- fastq_nucFreq(META, nCores,firstN =  1e5)
-ggNucF_Pa <- gg_nucFreq(nucF_Pa, "P. abyssi")
+ggNucF_Pa <- gg_nucFreq(nucF_Pa, EXP_NAME)
 plot(ggNucF_Pa)
 
 # Alignment efficiency report
-f_tab_Pa <- files_table(META, "bam_Pa")
+f_tab_Pa <- files_table(META, OUTDIR)
 rReport_Pa <- reads_report(f_tab_Pa, META, nCores)
-ggReadStats_Pa <- gg_readStats(rReport_Pa, "P. abyssi")
+ggReadStats_Pa <- gg_readStats(rReport_Pa, EXP_NAME)
 gridExtra::grid.arrange(ggReadStats_Pa[[1]], ggReadStats_Pa[[2]], ncol = 2)
 
-# load_all()
+load_all()
+
+genome <- GENOME
+geneAnnot <- TXOME
+nCores <- 8
+STORM_Pa <- storm_STORM(META, genome, geneAnnot, nCores)
+STORM_Pa <- SSIIIandTGIRT_metrics(STORM_Pa)
+
 ```
 
 # Session Info
@@ -115,5 +125,4 @@ tEnd <- Sys.time()
 tDif <- tEnd - tStart
 cat("Time to knit notebook:", round(tDif, 2), units(tDif))
 ```
-
 
