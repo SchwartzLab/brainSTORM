@@ -46,17 +46,23 @@ remotes::install_github("SchwartzLab/brainSTORM")
 ## Licence
 
 
-```{r}
-tStart <- Sys.time()
-# setwd("/home/labs/schwartzlab/miguelg/github_repos/brainSTORM/")
-# load_all()
-# rmTmpDir()
-# unlink("bam_Pa", recursive = TRUE)
+# Example Run 
 
+## Original run (P. occultum transcriptome)
+
+```{r}
+# setwd("/home/labs/schwartzlab/miguelg/github_repos/brainSTORM/")
+# unlink("bam_Pa", recursive = TRUE) # Delete output dir
+# rmTmpDir() # Delete tmp dir
+tStart <- Sys.time()
+# load_all()
+```
+
+### SETUP
+
+```{r}
+library(brainSTORM)
 # Genome and Gene Annotation
-# fastaGenome <- "/home/labs/schwartzlab/joeg/genomes/Pyrodictium_abyssi/prokka/PROKKA_01222021.fsa"
-# bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_abyssi/PROKKA_01222021_BED6.bed"
-rRNA <- c("PYCC_00363", "PYCC_00364")
 fastaGenome <- "/home/labs/schwartzlab/miguelg/BIGDATA/genome_references/p_occultum/pAbys_txome.fa"
 bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_occultum/pAbys_txome.bed"
 
@@ -66,7 +72,11 @@ EXP_NAME <- "P. abyssi"
 # Transcriptome for bisulphite conversion
 fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = 8)
 bedTxOme <- mkBedFromFastaTxOme(fastaTxOme)
+```
 
+### STAR genome and mapping reads
+
+```{r}
 # STAR Genomes generation
 bisTxPath <- bisGenome(fastaTxOme)
 STARGenome <- mkSTARgenome(fastaTxOme, bedTxOme)
@@ -103,7 +113,11 @@ alignSTAR(read1Files = META[libTreat == "m5C", FASTQ],
           alignEndsType = "Local", 
           outSAMtype = "BAM Unsorted", 
           outDir = OUTDIR)
+```
 
+### Make RDS
+
+```{r}
 # Process all BAM into TxDT
 GENOME <- txtools::tx_load_genome(fastaTxOme)
 TXOME <- txtools::tx_load_bed(bedTxOme)
@@ -118,24 +132,42 @@ rdsFiles <- parallel::mclapply(mc.cores = nCores, seq_along(META$FASTQ), functio
              nCores = 1, 
              remL = 1000, 
              minR = 0)
-}) 
+})
+```
 
+### Alignment report
+
+```{r}
 # Lib Complexity 
 libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
 ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt"), speciesName = EXP_NAME)
+plot(ggLCE)
+```
 
+
+```{r}
 # Nucleotide frequency
 nucF_Pa <- fastq_nucFreq(META, nCores,firstN =  1e5)
 ggNucF_Pa <- gg_nucFreq(nucF_Pa, EXP_NAME)
 plot(ggNucF_Pa)
+```
 
+
+```{r}
 # Alignment efficiency report
 f_tab_Pa <- files_table(META, OUTDIR)
 rReport_Pa <- reads_report(f_tab_Pa, META, nCores)
 ggReadStats_Pa <- gg_readStats(rReport_Pa, EXP_NAME)
 gridExtra::grid.arrange(ggReadStats_Pa[[1]], ggReadStats_Pa[[2]], ncol = 2)
+```
 
+### STORMbrain
 
+* STORM object creation
+* Metric calculations (for TGIRT and SSIII)
+* Logistic model fit
+
+```{r}
 genome <- GENOME
 geneAnnot <- TXOME
 nCores <- 8
@@ -143,13 +175,18 @@ nCores <- 8
 STORM <- storm_STORM(META, genome, geneAnnot, nCores)
 STORM <- SSIIIandTGIRT_metrics(STORM) %>% storm_makeCalls()
 
+# load logistic regression models
 logMods_Sc <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/Lib499/logMods_Sc.rds")
 logMods_Hs <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/Lib499/logMods_Hs.rds")
 
 # Archeal data fit using human and yeast model
 STORM_Pa_Sc <- call_RNAmods_logRegMods(STORM, logMods_Sc) %>% storm_summary()
 STORM_Pa_Hs <- call_RNAmods_logRegMods(STORM, logMods_Hs) %>% storm_summary()
+```
 
+### Extracting some results
+
+```{r}
 ggList_Pa_Sc <- lapply(RNAmods_vec[1:6], function(RNAmod_i){
     STORM <- STORM_Pa_Sc$SUMMARY[[RNAmod_i]]
     STORM$isMod <- STORM[,grepl(pattern = "pred_", x = names(STORM)), with = FALSE] %>% apply(1, all)
@@ -161,7 +198,25 @@ ggList_Pa_Sc <- lapply(RNAmods_vec[1:6], function(RNAmod_i){
         ggplot2::geom_point() + ggplot2::facet_grid(.~refSeq)
     list(table = tmpT, gg1 = gg1, gg2 = gg2)
 }) %>% magrittr::set_names(RNAmods_vec[1:6])
-gridExtra::grid.arrange(ggList_Pa_Sc$Y$gg1, ggList_Pa_Sc$Y$gg2, ncol = 1)
+```
+
+**Resutls for Pseudouridine**
+
+```{r}
+rnaMod <- RNAmods_vec[1]
+gridExtra::grid.arrange(ggList_Pa_Sc[[rnaMod]]$gg1, ggList_Pa_Sc[[rnaMod]]$gg2, ncol = 1)
+
+```
+
+
+
+## Run with actual P. abyssi genome
+
+```{r}
+# fastaGenome <- "/home/labs/schwartzlab/joeg/genomes/Pyrodictium_abyssi/prokka/PROKKA_01222021.fsa"
+# bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_abyssi/PROKKA_01222021_BED6.bed"
+# rRNA <- c("PYCC_00363", "PYCC_00364")
+
 
 ```
 
