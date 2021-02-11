@@ -18,10 +18,38 @@ knitr::opts_chunk$set(
 `r badger::badge_devel("SchwartzLab/brainSTORM", "blue")`
 <!-- badges: end -->
 
+## Description 
+
+**brainSTORM** is a package that processes RNA-seq reads alignments into 
+transcriptomic-oriented objects, making use of the 
+(**txtools**)[https://github.com/AngelCampos/txtools] package, to
+process BRAINseq-based data.
+
+## Quick example
+
+## Installation
+
+You can install the development version from
+[GitHub](https://github.com/SchwartzLab/brainSTORM) typing in the following 
+commands in the R console:
+
+```{r, installation, eval = F}
+if (!requireNamespace("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_github("SchwartzLab/brainSTORM")
+```
+
+## Further documentation
+    
+## Current limitations:
+
+## Licence
+
+
 ```{r}
 tStart <- Sys.time()
 # setwd("/home/labs/schwartzlab/miguelg/github_repos/brainSTORM/")
-load_all()
+# load_all()
 # rmTmpDir()
 # unlink("bam_Pa", recursive = TRUE)
 
