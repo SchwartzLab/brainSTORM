@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 
 **brainSTORM** is a package that processes RNA-seq reads alignments into 
 transcriptomic-oriented objects, making use of the 
-(**txtools**)[https://github.com/AngelCampos/txtools] package, to
+[**txtools**](https://github.com/AngelCampos/txtools) package, to
 process BRAINseq-based data.
 
 ## Quick example
