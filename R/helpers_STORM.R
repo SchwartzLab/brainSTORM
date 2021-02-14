@@ -91,15 +91,17 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
 libComplexReport <- function(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = FALSE){
     if(all(file.exists(META$BAM))){
         for(file in META$BAM){
-            com <- paste0("/apps/RH7U2/gnu/preseq/2.0.1/preseq lc_extrap -P -B ",
+            com <- paste0("module load libgsl/2.3 && ",
+                          "module load preseq/2.0.1 && ",
+                          "/apps/RH7U2/gnu/preseq/2.0.1/preseq lc_extrap -P -B ",
                           "-e ", maxExtrapolation, " -s ", steps, " ", file, " -o ",
-                          gsub(pattern = ".bam", replacement = ".lce.txt", x = file),
+                          gsub(pattern = ".bam$", replacement = ".lce.txt", x = file),
                           " &")
             system(com)
         }
-        Sys.sleep(time = 5)
-        lastBam <- gsub(pattern = ".bam", replacement = ".lce.txt",x = META$BAM)
-        while(min(difftime(Sys.time(), file.info(lastBam)$mtime, units = "secs")) < 60){
+        Sys.sleep(time = 10)
+        lastBam <- gsub(pattern = ".bam$", replacement = ".lce.txt", x = META$BAM)
+        while(min(difftime(Sys.time(), file.info(lastBam)$mtime, units = "secs"), na.rm = TRUE) < 60){
             Sys.sleep(time = 2)
         }
     }else{
