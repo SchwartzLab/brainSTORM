@@ -228,12 +228,12 @@ fastq_nucFreq <- function(META, nCores, firstN = 1e4){
 gg_nucFreq <- function(nucF_x, subtitle){
     tmp <- prop.table(nucF_x, margin = 2) %>% data.frame %>% tibble::rownames_to_column(var = "nuc") %>%
         tidyr::pivot_longer(cols = -nuc, names_to = "Sample", values_to = "Ratio")
-    ggplot2::ggplot(tmp, ggplot2::aes(x = tmp$Sample, y = tmp$Ratio, fill = tmp$nuc)) +
+    ggplot2::ggplot(tmp, ggplot2::aes(x = Sample, y = Ratio, fill = nuc)) +
         ggplot2::geom_bar(stat = "identity") +
         ggplot2::scale_fill_brewer(palette="Set1") +
         ggplot2::theme_minimal() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
-        ggplot2::ggtitle(paste("Nucleotide Frequency per library in", subtitle))
+        ggplot2::ggtitle("Nucleotide Frequency per library", subtitle = subtitle)
 }
 
 # Reads report table
@@ -272,14 +272,13 @@ gg_readStats <- function(rReport, species){
                                  cols = c("FASTQ", "BAM", "txDT"), names_to = "Reads")
     tmpDT$Reads <- factor(tmpDT$Reads, levels = c("FASTQ", "BAM", "txDT"))
     tmpDT$value <- magrittr::divide_by(tmpDT$value, 1e6)
-    t_GG1 <- ggplot2::ggplot(tmpDT, ggplot2::aes(x = tmpDT$sample, y = tmpDT$value, fill = tmpDT$Reads)) +
+    t_GG1 <- ggplot2::ggplot(tmpDT, ggplot2::aes(x = sample, y = value, fill = Reads)) +
         ggplot2::geom_bar(stat="identity") +
         ggplot2::theme_minimal() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
         ggplot2::ggtitle(paste("Reads in", species, "libraries by processing step"),) +
         ggplot2::ylab("Million reads") +
         ggplot2::xlab("Samples")
-
     # Proportion
     tmpDT <- rReport[, -c(5, 6)]
     tmpDT$FASTQ <- tmpDT$FASTQ_reads - tmpDT$BAM_aligns
@@ -328,7 +327,7 @@ ggAlignEffPlot <- function(META, rReport){
 
 # Library complexity extrapolation barplots and tables
 gg_lce <- function(META, tab_name, speciesName = ""){
-    lceFiles <- gsub(META$BAM, pattern = ".bam", replacement = ".lce.txt") %>%
+    lceFiles <- gsub(META$BAM, pattern = ".bam$", replacement = ".lce.txt") %>%
         magrittr::set_names(META$id)
     if(!all(file.exists(lceFiles))){
         stop("Report files missing:\n", paste(lceFiles[!file.exists(lceFiles)], collapse = " \n"))
@@ -457,7 +456,7 @@ hlp_start_CALLS <- function(STORM){
 hlp_assign_scores <- function(STORM, RNAmod, scores){
     tmp <- STORM$RES %>%
         tidyr::pivot_wider(names_from = metric, values_from = score) %>%
-        data.table::data.table
+        data.table::data.table()
     selVars <- c(storm_baseCols, scores)
     tmp <- tmp[,names(tmp) %in% selVars, with = FALSE]
     tmp <- split(tmp, tmp$set)
