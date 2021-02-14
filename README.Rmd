@@ -31,201 +31,23 @@ process BRAINseq-based data.
 
 You can install the development version from
 [GitHub](https://github.com/SchwartzLab/brainSTORM) typing in the following 
-commands in the R console:
+commands in the R console and changing the string `YOUR_TOKEN` for a 
+Personal Access Token generated via GitHub:
+
+* Create an authentication token in Github following this [link](https://github.com/settings/tokens).
+* For "Scopes" select all under the "Repo: Full control of private repositories" category
 
 ```{r, installation, eval = F}
 if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
-remotes::install_github("SchwartzLab/brainSTORM")
+remotes::install_github("SchwartzLab/brainSTORM", auth_token = "YOUR_TOKEN")
 ```
 
 ## Further documentation
     
-## Current limitations:
+## Current limitations
 
 ## Licence
 
-
-# Example Run 
-
-## Original run (P. occultum transcriptome)
-
-```{r}
-# setwd("/home/labs/schwartzlab/miguelg/github_repos/brainSTORM/")
-# unlink("bam_Pa", recursive = TRUE) # Delete output dir
-# rmTmpDir() # Delete tmp dir
-tStart <- Sys.time()
-# load_all()
-```
-
-### SETUP
-
-```{r}
-library(brainSTORM)
-# Genome and Gene Annotation
-fastaGenome <- "/home/labs/schwartzlab/miguelg/BIGDATA/genome_references/p_occultum/pAbys_txome.fa"
-bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_occultum/pAbys_txome.bed"
-
-OUTDIR <- "bam_Pa"
-EXP_NAME <- "P. abyssi"
-
-# Transcriptome for bisulphite conversion
-fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = 8)
-bedTxOme <- mkBedFromFastaTxOme(fastaTxOme)
-```
-
-### STAR genome and mapping reads
-
-```{r}
-# STAR Genomes generation
-bisTxPath <- bisGenome(fastaTxOme)
-STARGenome <- mkSTARgenome(fastaTxOme, bedTxOme)
-STARGenome_bis <- mkSTARgenome(bisTxPath, bedTxOme)
-
-# META
-r1Files <- file.path("fastq", grep(list.files("fastq"), pattern = "R1", value = TRUE))
-
-vList <- list(organism = c("PyroAbyss", "TherAcid", "Yeast", "Human"), 
-              RTase = c("SSIII", "SSIV", "TGIRT"),
-              libTreat = c("Ac4C", "CMC", "DeacetylatedAc4C", "MocklowdNTPs", "Mock", "Dimroth", "m5C"),
-              bioTreat = c("80deg", "95deg", "100deg", "AcidpH1", "AcidpH2", "AcidpH3"))
-
-META <- storm_META(fileNames = r1Files,
-                   varsList = vList,
-                   setVars = "bioTreat",
-                   idVars = c("organism", "RTase", "libTreat", "bioTreat"),
-                   groupVars = c("libTreat", "RTase"), 
-                   outDir = OUTDIR)
-
-# STAR Alignment
-alignSTAR(read1Files = META[libTreat != "m5C", FASTQ], 
-          nCores = 8, 
-          zipped = TRUE,
-          STARgenomeDir = STARGenome, 
-          alignEndsType = "Local", 
-          outSAMtype = "BAM Unsorted", 
-          outDir = OUTDIR)
-
-alignSTAR(read1Files = META[libTreat == "m5C", FASTQ], 
-          nCores = 8, 
-          zipped = TRUE,
-          STARgenomeDir = STARGenome_bis, 
-          alignEndsType = "Local", 
-          outSAMtype = "BAM Unsorted", 
-          outDir = OUTDIR)
-```
-
-### Make RDS
-
-```{r}
-# Process all BAM into TxDT
-GENOME <- txtools::tx_load_genome(fastaTxOme)
-TXOME <- txtools::tx_load_bed(bedTxOme)
-TXOME <- TXOME[TXOME$name %in% c("NA_rRNA_1511", "NA_rRNA_1512", "NA_rRNA_1513", "NA_rRNA_1514")]
-
-rdsFiles <- parallel::mclapply(mc.cores = nCores, seq_along(META$FASTQ), function(i){
-    bam2TxDT(BAMfile = META$BAM[i], 
-             geneAnnot = TXOME, 
-             genome = GENOME, 
-             dtType = "covNuc", 
-             outDir = OUTDIR, 
-             nCores = 1, 
-             remL = 1000, 
-             minR = 0)
-})
-```
-
-### Alignment report
-
-```{r}
-# Lib Complexity 
-libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
-ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt"), speciesName = EXP_NAME)
-plot(ggLCE)
-```
-
-
-```{r}
-# Nucleotide frequency
-nucF_Pa <- fastq_nucFreq(META, nCores,firstN =  1e5)
-ggNucF_Pa <- gg_nucFreq(nucF_Pa, EXP_NAME)
-plot(ggNucF_Pa)
-```
-
-
-```{r}
-# Alignment efficiency report
-f_tab_Pa <- files_table(META, OUTDIR)
-rReport_Pa <- reads_report(f_tab_Pa, META, nCores)
-ggReadStats_Pa <- gg_readStats(rReport_Pa, EXP_NAME)
-gridExtra::grid.arrange(ggReadStats_Pa[[1]], ggReadStats_Pa[[2]], ncol = 2)
-```
-
-### STORMbrain
-
-* STORM object creation
-* Metric calculations (for TGIRT and SSIII)
-* Logistic model fit
-
-```{r}
-genome <- GENOME
-geneAnnot <- TXOME
-nCores <- 8
-
-STORM <- storm_STORM(META, genome, geneAnnot, nCores)
-STORM <- SSIIIandTGIRT_metrics(STORM) %>% storm_makeCalls()
-
-# load logistic regression models
-logMods_Sc <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/Lib499/logMods_Sc.rds")
-logMods_Hs <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/Lib499/logMods_Hs.rds")
-
-# Archeal data fit using human and yeast model
-STORM_Pa_Sc <- call_RNAmods_logRegMods(STORM, logMods_Sc) %>% storm_summary()
-STORM_Pa_Hs <- call_RNAmods_logRegMods(STORM, logMods_Hs) %>% storm_summary()
-```
-
-### Extracting some results
-
-```{r}
-ggList_Pa_Sc <- lapply(RNAmods_vec[1:6], function(RNAmod_i){
-    STORM <- STORM_Pa_Sc$SUMMARY[[RNAmod_i]]
-    STORM$isMod <- STORM[,grepl(pattern = "pred_", x = names(STORM)), with = FALSE] %>% apply(1, all)
-    STORM$isMod[is.na(STORM$isMod)] <- FALSE
-    tmpT <- table(STORM$isMod, STORM$refSeq)
-    gg1 <- ggplot2::ggplot(STORM, ggplot2::aes(x= linScore_80deg, y = linScore_95deg, colour = isMod)) + 
-        ggplot2::geom_point() + ggplot2::facet_grid(.~refSeq)
-    gg2 <- ggplot2::ggplot(STORM, ggplot2::aes(x= linScore_80deg, y = linScore_100deg, colour = isMod)) + 
-        ggplot2::geom_point() + ggplot2::facet_grid(.~refSeq)
-    list(table = tmpT, gg1 = gg1, gg2 = gg2)
-}) %>% magrittr::set_names(RNAmods_vec[1:6])
-```
-
-**Resutls for Pseudouridine**
-
-```{r}
-rnaMod <- RNAmods_vec[1]
-gridExtra::grid.arrange(ggList_Pa_Sc[[rnaMod]]$gg1, ggList_Pa_Sc[[rnaMod]]$gg2, ncol = 1)
-
-```
-
-
-
-## Run with actual P. abyssi genome
-
-```{r}
-# fastaGenome <- "/home/labs/schwartzlab/joeg/genomes/Pyrodictium_abyssi/prokka/PROKKA_01222021.fsa"
-# bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/p_abyssi/PROKKA_01222021_BED6.bed"
-# rRNA <- c("PYCC_00363", "PYCC_00364")
-
-
-```
-
-# Session Info
-
-```{r, Session Info, echo = FALSE}
-sessionInfo()
-tEnd <- Sys.time()
-tDif <- tEnd - tStart
-cat("Time to knit notebook:", round(tDif, 2), units(tDif))
-```
+brainSTORM is developed under the [Artistic Licence 2.0](https://opensource.org/licenses/Artistic-2.0).
 
