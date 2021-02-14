@@ -1,3 +1,23 @@
+#' BAM to txDataTable
+#'
+#' From BAM file to count data in a table
+#'
+#' @param BAMfile
+#' @param geneAnnot
+#' @param genome
+#' @param dtType
+#' @param paired
+#' @param outDir
+#' @param remL
+#' @param minR
+#' @param nCores
+#' @param ySize
+#' @param verb
+#'
+#' @return
+#' @export
+#'
+#' @examples
 bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
                      outDir, remL = 10000, minR = 50, nCores = 2,
                      ySize = 100000, verb = TRUE){

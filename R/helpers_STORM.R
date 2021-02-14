@@ -10,7 +10,15 @@ rmTmpDir <- function(){
     if(dir.exists("./STORMtmp_dir")){unlink("./STORMtmp_dir", recursive = TRUE)}
 }
 
-# Create temporal bisulphite genome
+
+#' Make bisulphite genome
+#'
+#' @param fastaGenome
+#'
+#' @return
+#' @export
+#'
+#' @examples
 bisGenome <- function(fastaGenome){
     mkTmpDir()
     outName <- paste0(strsplit(fastaGenome, split = "/") %>% unlist %>% utils::tail(1),
@@ -38,7 +46,20 @@ mkGTF <- function(bedAnnotation, outName = NULL, source = "user"){
     utils::write.table(tmp, file = outName, quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
 }
 
-# STAR genome generator
+#' Make STAR genome
+#'
+#' Wrapper for STAR genome generation
+#'
+#' @param fastaGenome
+#' @param bedAnnotation
+#' @param outDir
+#' @param nCores
+#' @param maxReadLength
+#'
+#' @return
+#' @export
+#'
+#' @examples
 mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
                          nCores = 2, maxReadLength = 101){
     outName <- paste0(strsplit(fastaGenome, split = "/") %>% unlist %>% utils::tail(1),
@@ -87,7 +108,17 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
     outDir
 }
 
-# Library complexity reports lce.txt
+#' Library complexity report
+#'
+#' @param META
+#' @param maxExtrapolation
+#' @param steps
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
 libComplexReport <- function(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = FALSE){
     if(all(file.exists(META$BAM))){
         for(file in META$BAM){

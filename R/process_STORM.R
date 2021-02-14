@@ -1,6 +1,21 @@
-# STAR alignment
-# Wrapper to perform alignment of sequencing reads to a reference genome
-# using STAR (Dobin) and sorting with Samtools.
+#' STAR alignment
+#' Wrapper to perform alignment of sequencing reads to a reference genome
+#' using STAR (Dobin) and sorting with Samtools.
+#'
+#' @param read1Files
+#' @param STARgenomeDir
+#' @param pairedEnd
+#' @param zipped
+#' @param nCores
+#' @param alignEndsType
+#' @param outSAMtype
+#' @param outFilterMultimapNmax
+#' @param outDir
+#'
+#' @return
+#' @export
+#'
+#' @examples
 alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE,
                       nCores = 4, alignEndsType = "Local",
                       outSAMtype = "BAM Unsorted", outFilterMultimapNmax = 10,
@@ -80,7 +95,17 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     }
 }
 
-# STORM object constructor from META table
+#' STORM object constructor from META table
+#'
+#' @param META
+#' @param genome
+#' @param geneAnnot
+#' @param nCores
+#'
+#' @return
+#' @export
+#'
+#' @examples
 storm_STORM <- function(META, genome = NULL, geneAnnot = NULL, nCores = 1){
     if(hasDups(META$id)){
         stop("Not allowed duplicated id variables in META")
@@ -129,7 +154,16 @@ storm_STORM <- function(META, genome = NULL, geneAnnot = NULL, nCores = 1){
     return(STORM)
 }
 
-# STORM$SUMMARY table
+#' STORM-summary
+#'
+#' Adds STORM$SUMMARY table
+#'
+#' @param STORM
+#'
+#' @return
+#' @export
+#'
+#' @examples
 storm_summary <- function(STORM){
     RNAmods <- names(STORM$CALLS[[1]])
     OUT <- lapply(RNAmods, function(RNAmod_i){
@@ -211,7 +245,16 @@ fastq_dupRate <- function(FASTQs_pahts, nCores){
     }) %>% unlist
 }
 
-# FASTQ nucleotide frequency
+#' Nucleotide frequency report
+#'
+#' @param META
+#' @param nCores
+#' @param firstN
+#'
+#' @return
+#' @export
+#'
+#' @examples
 fastq_nucFreq <- function(META, nCores, firstN = 1e4){
     parallel::mclapply(mc.cores = nCores, META$FASTQ, function(file){
         tmp <- readLines(file, firstN * 4)[seq(2, firstN*4, 4)] %>% Biostrings::DNAStringSet()
@@ -224,7 +267,15 @@ fastq_nucFreq <- function(META, nCores, firstN = 1e4){
     }) %>% do.call(what = cbind) %>% magrittr::set_colnames(META$id)
 }
 
-## ggplot nucleotide frequency barplots
+#' nucleotide frequency plot
+#'
+#' @param nucF_x
+#' @param subtitle
+#'
+#' @return
+#' @export
+#'
+#' @examples
 gg_nucFreq <- function(nucF_x, subtitle){
     tmp <- prop.table(nucF_x, margin = 2) %>% data.frame %>% tibble::rownames_to_column(var = "nuc") %>%
         tidyr::pivot_longer(cols = -nuc, names_to = "Sample", values_to = "Ratio")
@@ -236,32 +287,54 @@ gg_nucFreq <- function(nucF_x, subtitle){
         ggplot2::ggtitle("Nucleotide Frequency per library", subtitle = subtitle)
 }
 
-# Reads report table
+#' Alignment report table
+#'
+#' @param DT
+#' @param META
+#' @param nCores
+#'
+#' @return
+#' @export
+#'
+#' @examples
 reads_report <- function(DT, META, nCores = 4){
-    res1 <- parallel::mclapply(mc.cores = nCores, DT$FASTQ, function(x){
-        tmp <- ShortRead::readFastq(x)
-        length(tmp)
-    }) %>% unlist
-    res2 <- parallel::mclapply(mc.cores = nCores, DT$BAM[DT$BAM_ok], function(x){
-        tmp2 <- Rsamtools::scanBam(x)
-        tmp2[[1]]$qname %>% unique %>% length
-    }) %>% unlist
-    res3 <- parallel::mclapply(mc.cores = nCores, DT$rds[DT$rds_ok], function(x){
-        tmplog <- data.table::fread(gsub(pattern = "rds", "log", x), header = F)
-        tmplog[grep(tmplog$V1, pattern =  "unique reads"),]$V2 %>% as.numeric()
-    }) %>% unlist
-    tmpDT <- data.table::data.table(sample = META$id,
-                                    FASTQ_reads = res1,
-                                    BAM_aligns = NA,
-                                    tx_starts = NA)
-    tmpDT$BAM_aligns[DT$BAM_ok] <- res2
-    tmpDT$tx_starts[DT$rds_ok] <- res3
-    tmpDT$pC_BAM <- round(tmpDT$BAM_aligns / tmpDT$FASTQ_reads * 100, 2)
-    tmpDT$pC_tx <- round(tmpDT$tx_starts / tmpDT$BAM_aligns * 100, 2)
-    return(tmpDT)
+    f_tab <- files_table(META)
+    if(all(f_tab$BAM_ok) & all(f_tab$lce_ok) & all(f_tab$rds_ok)){
+        res1 <- parallel::mclapply(mc.cores = nCores, DT$FASTQ, function(x){
+            tmp <- ShortRead::readFastq(x)
+            length(tmp)
+        }) %>% unlist
+        res2 <- parallel::mclapply(mc.cores = nCores, DT$BAM[DT$BAM_ok], function(x){
+            tmp2 <- Rsamtools::scanBam(x)
+            tmp2[[1]]$qname %>% unique %>% length
+        }) %>% unlist
+        res3 <- parallel::mclapply(mc.cores = nCores, DT$rds[DT$rds_ok], function(x){
+            tmplog <- data.table::fread(gsub(pattern = "rds", "log", x), header = F)
+            tmplog[grep(tmplog$V1, pattern =  "unique reads"),]$V2 %>% as.numeric()
+        }) %>% unlist
+        tmpDT <- data.table::data.table(sample = META$id,
+                                        FASTQ_reads = res1,
+                                        BAM_aligns = NA,
+                                        tx_starts = NA)
+        tmpDT$BAM_aligns[DT$BAM_ok] <- res2
+        tmpDT$tx_starts[DT$rds_ok] <- res3
+        tmpDT$pC_BAM <- round(tmpDT$BAM_aligns / tmpDT$FASTQ_reads * 100, 2)
+        tmpDT$pC_tx <- round(tmpDT$tx_starts / tmpDT$BAM_aligns * 100, 2)
+        return(tmpDT)
+    }else{
+        stop("Some files are missing.")
+    }
 }
 
-# read stats plots with ggplots
+#' Alignment report plots
+#'
+#' @param rReport
+#' @param species
+#'
+#' @return
+#' @export
+#'
+#' @examples
 gg_readStats <- function(rReport, species){
     tmpDT <- rReport[, -c(5, 6)]
     tmpDT$FASTQ <- tmpDT$FASTQ_reads - tmpDT$BAM_aligns
@@ -325,7 +398,16 @@ ggAlignEffPlot <- function(META, rReport){
     list(tmpGG1, tmpGG2, tmpGG3)
 }
 
-# Library complexity extrapolation barplots and tables
+#' Library complexity extrapolation plot
+#'
+#' @param META
+#' @param tab_name
+#' @param speciesName
+#'
+#' @return
+#' @export
+#'
+#' @examples
 gg_lce <- function(META, tab_name, speciesName = ""){
     lceFiles <- gsub(META$BAM, pattern = ".bam$", replacement = ".lce.txt") %>%
         magrittr::set_names(META$id)
@@ -466,7 +548,15 @@ hlp_assign_scores <- function(STORM, RNAmod, scores){
     STORM
 }
 
-# Abbreviated STORM$CALLS
+
+#' Assigning predefined Scores
+#'
+#' @param STORM
+#'
+#' @return
+#' @export
+#'
+#' @examples
 storm_makeCalls <- function(STORM){
     hlp_start_CALLS(STORM) %>%
         hlp_assign_scores("Y", Y_scores) %>%
@@ -595,7 +685,17 @@ trainLogModel_RNAmods <- function(STORM, isModFun, modNuc, thresholds){
                 MCCmat = OUT, MCC= OUT[selThr, selComb]))
 }
 
-# Update STORM$CALLS with logistic and linear scores and prediction
+#' Logistic regressions scores
+#'
+#' Update STORM$CALLS with logistic and linear scores and prediction
+#'
+#' @param STORM
+#' @param logMods
+#'
+#' @return
+#' @export
+#'
+#' @examples
 call_RNAmods_logRegMods <- function(STORM, logMods){
     STORM$CALLS <- lapply(names(STORM$CALLS), function(callList){
         tmp <- lapply(names(STORM$CALLS[[callList]]), function(RNAmod){

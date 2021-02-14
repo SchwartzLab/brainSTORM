@@ -1,4 +1,18 @@
-# STORM META constructor from RDS file names
+#' Create STORM META - Experiment design matrix
+#'
+#' STORM META constructor from RDS file names
+#'
+#' @param fileNames
+#' @param varsList
+#' @param groupVars
+#' @param setVars
+#' @param idVars
+#' @param outDir
+#'
+#' @return
+#' @export
+#'
+#' @examples
 storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
     if(magrittr::not("libTreat" %in% names(varsList))){
         stop("libTreat must be one of the element names in varsList argument")
@@ -56,7 +70,20 @@ getGeneSeqsfromGenome <- function(geneAnnot, genome, nCores = 1){
     }) %>% Biostrings::DNAStringSet()
 }
 
-# Extract transcriptome sequences from genome and generate FASTA file
+
+#' Make transcriptome
+#'
+#' Extract transcriptome sequences from genome and generate FASTA file
+#'
+#' @param fastaGenome
+#' @param bedAnnotation
+#' @param outFile
+#' @param nCores
+#'
+#' @return
+#' @export
+#'
+#' @examples
 mkTranscriptome <- function(fastaGenome, bedAnnotation, outFile = "auto", nCores){
     genome <- txtools::tx_load_genome(fastaGenome)
     geneAnnot <- txtools::tx_load_bed(bedAnnotation)
@@ -71,7 +98,17 @@ mkTranscriptome <- function(fastaGenome, bedAnnotation, outFile = "auto", nCores
     outFile
 }
 
-# Make GeneAnnotation for Transcriptome
+#' Make BED from FASTA Transcriptome
+#'
+#' Make GeneAnnotation for Transcriptome
+#'
+#' @param fastaTxOme
+#' @param outFile
+#'
+#' @return
+#' @export
+#'
+#' @examples
 mkBedFromFastaTxOme <- function(fastaTxOme, outFile = "auto"){
     fa <- txtools::tx_load_genome(fastaTxOme)
     if(max(Biostrings::width(fa)) > 10000){warning("Maximum sequence length exceeded 10000, make sure sequences represent transcripts.")}

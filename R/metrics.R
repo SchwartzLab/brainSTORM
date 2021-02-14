@@ -1,5 +1,15 @@
 # PREDEFINED METRICS ###########################################################
 
+#' SSIII and TGIRT metrics
+#'
+#' Predefined metrics
+#'
+#' @param STORM
+#'
+#' @return
+#' @export
+#'
+#' @examples
 SSIIIandTGIRT_metrics <- function(STORM){
     STORM %>%
         add_Nm_metrics %>%
