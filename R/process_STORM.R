@@ -439,18 +439,7 @@ gg_lce <- function(META, tab_name, speciesName = ""){
     return(ggOUT)
 }
 
-
-# Special Vectors ##############################################################
-
-storm_baseCols <- c("chr", "gencoor", "strand", "gene", "txcoor", "pos",
-                    "refSeq", "set", "nuc")
-storm_baseCoorCols <- c("chr", "gencoor", "strand", "gene", "txcoor", "pos", "refSeq")
-
-RNAmods_vec <- c("Y", "Nm", "m5C", "ac4C", "m1A", "m7G", "m3U")
-
 # STORM add functions ##########################################################
-
-# Notebook 3 ###################################################################
 
 TGIRT_metrics <- function(STORM){
     STORM %>%
