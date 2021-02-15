@@ -289,7 +289,6 @@ gg_nucFreq <- function(nucF_x, subtitle){
 
 #' Alignment report table
 #'
-#' @param DT
 #' @param META
 #' @param nCores
 #'
@@ -297,9 +296,9 @@ gg_nucFreq <- function(nucF_x, subtitle){
 #' @export
 #'
 #' @examples
-reads_report <- function(DT, META, nCores = 4){
-    f_tab <- files_table(META)
-    if(all(f_tab$BAM_ok) & all(f_tab$lce_ok) & all(f_tab$rds_ok)){
+reads_report <- function(META, nCores = 4){
+    DT <- files_table(META)
+    if(all(DT$BAM_ok) & all(DT$lce_ok) & all(DT$rds_ok)){
         res1 <- parallel::mclapply(mc.cores = nCores, DT$FASTQ, function(x){
             tmp <- ShortRead::readFastq(x)
             length(tmp)
