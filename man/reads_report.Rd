@@ -4,7 +4,7 @@
 \alias{reads_report}
 \title{Alignment report table}
 \usage{
-reads_report(DT, META, nCores = 4)
+reads_report(META, nCores = 4)
 }
 \arguments{
 \item{nCores}{}

@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 **brainSTORM** is a package that processes RNA-seq reads alignments into 
 transcriptomic-oriented objects, making use of the 
 [**txtools**](https://github.com/AngelCampos/txtools) package, to
-process BRAINseq-based data.
+process STORMseq-based data.
 
 ## Quick example
 
@@ -31,11 +31,7 @@ process BRAINseq-based data.
 
 You can install the development version from
 [GitHub](https://github.com/SchwartzLab/brainSTORM) typing in the following 
-commands in the R console and changing the string `YOUR_TOKEN` for a 
-Personal Access Token generated via GitHub:
-
-* Create an authentication token in Github following this [link](https://github.com/settings/tokens).
-* For "Scopes" select all under the "Repo: Full control of private repositories" category
+commands in the R console:
 
 ```{r, installation, eval = F}
 if (!requireNamespace("remotes", quietly = TRUE))

@@ -37,7 +37,8 @@ mkGTF <- function(bedAnnotation, outName = NULL, source = "user"){
     mkTmpDir()
     tmpDir <- file.path(getwd(), "STORMtmp_dir")
     if(is.null(outName)){outName <- file.path(tmpDir, "tmp_geneAnnot.gtf")}
-    com <- paste0("/apps/RH7U2/general/kentUtils/v377/bin/bedToGenePred ",
+    com <- paste0("module load kentUtils/v377 && ",
+                  "/apps/RH7U2/general/kentUtils/v377/bin/bedToGenePred ",
                   bedAnnotation, " /dev/stdout | /apps/RH7U2/general/",
                   "kentUtils/v377/bin/genePredToGtf file /dev/stdin ", outName)
     system(com)
@@ -80,7 +81,8 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
     }
     genomeindexNb <- floor(min(14, log2(lGen)/2 - 1))
     if(is.null(bedAnnotation)){
-        com <- paste("/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",
+        com <- paste("module load STAR/2.7.5c &&",
+                     "/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",
                      "--runMode genomeGenerate",
                      "--runThreadN", nCores,
                      "--genomeDir", outDir,
@@ -92,7 +94,8 @@ mkSTARgenome <- function(fastaGenome, bedAnnotation = NULL, outDir = NULL,
         tmpF <- tempfile() %>% strsplit(split = "/") %>% unlist %>% utils::tail(1)
         tmpGTF <- file.path(getwd(), "STORMtmp_dir", tmpF)
         mkGTF(bedAnnotation, tmpGTF)
-        com <- paste("/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",
+        com <- paste("module load STAR/2.7.5c &&",
+                     "/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",
                      "--runMode genomeGenerate",
                      "--runThreadN", nCores,
                      "--genomeDir", outDir,

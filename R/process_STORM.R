@@ -34,7 +34,8 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
             gsub(pattern = "R1.fastq.gz", replacement = "") %>%
             gsub(read1F, pattern = "R1.fastq", replacement = "")
         outFPrefix <- file.path(getwd(), "STORMtmp_dir", outFPrefix)
-        com <- paste0("/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",
+        com <- paste0("module load STAR/2.7.5c &&",
+                      "/apps/RH7U2/general/STAR/2.7.5c/bin/Linux_x86_64/STAR",
                       " --runMode alignReads",
                       " --runThreadN ", nCores,
                       " --genomeDir ", STARgenomeDir,
@@ -73,10 +74,12 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     # Sort and index with samtools
     bamFiles <- file.path("STORMtmp_dir", paste0(rootNames, "_Aligned.out.bam"))
     for(file in bamFiles){
-        system(paste0("/apps/RH7U2/gnu/samtools/1.9/bin/samtools sort -o ",
+        system(paste0("module load samtools/1.9 && ",
+                      "/apps/RH7U2/gnu/samtools/1.9/bin/samtools sort -o ",
                       gsub(file, pattern = ".bam$", replacement = ".sorted.bam"),
                       " ", file, " -@", nCores))
-        system(paste0("/apps/RH7U2/gnu/samtools/1.9/bin/samtools index ",
+        system(paste0("module load samtools/1.9 && ",
+                      "/apps/RH7U2/gnu/samtools/1.9/bin/samtools index ",
                       gsub(file, pattern = ".bam$", replacement = ".sorted.bam")))
         system(paste0("rm ", file))
     }
@@ -436,33 +439,6 @@ gg_lce <- function(META, tab_name, speciesName = ""){
     return(ggOUT)
 }
 
-# Library complexity line plots
-gg_lceLines <- function(f_tab){
-    require(plotly)
-    tmp <- lapply(f_tab$lce, fread) %>%
-        magrittr::set_names(f_tab$id)
-    tmp <- lapply(names(tmp), function(x){
-        cbind(tmp[[x]], id = x)
-    }) %>% do.call(what = rbind) %>% data.table::data.table()
-    tmpGG <- ggplot2::ggplot(tmp) + ggplot2::geom_line(ggplot2::aes(x = tmp$TOTAL_READS,
-                                                                    y = tmp$EXPECTED_DISTINCT,
-                                                                    colour = id)) +
-        ggplot2::geom_ribbon(ggplot2::aes(x = tmp$TOTAL_READS,
-                                          y = tmp$EXPECTED_DISTINCT,
-                                          ymin= tmp$LOWER_0.95CI,
-                                          ymax= tmp$UPPER_0.95CI,
-                                          fill = tmp$id),alpha=0.2) + ggplot2::theme_minimal()
-    plotly::ggplotly(tmpGG)
-}
-
-# Notebook 2 ###################################################################
-
-
-# STORM functions ##############################################################
-
-
-
-
 
 # Special Vectors ##############################################################
 
@@ -598,21 +574,6 @@ extract_AUC_sen_spe <- function(res, RNAmod, strategy, organism){
                specificity = unlist(lapply(seq(res), function(i) res[[i]][RNAmod, "Specificity"])))
 }
 
-# Predict class based on cutpointr model
-predict_cutpointr <- function(cp_model, newdata){
-    pr <- cp_model$predictor
-    dir <- cp_model$direction
-    ocp <- cp_model$optimal_cutpoint
-    cuts <- lapply(seq_along(pr), function(x){
-        if(dir[x] == "<="){
-            newdata[,pr[x]] <= ocp[x]
-        }else if(dir[x] == ">="){
-            newdata[,pr[x]] >= ocp[x]
-        }else{stop("Direction of predictor is not supported")}
-    }) %>% do.call(what = "rbind") %>% colSums() %>% magrittr::equals(length(pr))
-    ifelse(cuts, as.character(cp_model$pos_class[1]), as.character(cp_model$neg_class[1]))
-}
-
 # Matthew Correlation Coefficient
 matthewCorrCoeff <- function(scores, successes){
     MCC <- NULL
@@ -655,11 +616,6 @@ all_comb_allNelements <- function(x){
         unlist(recursive = FALSE)
 }
 
-# pheatmap, no clustering
-pheat_NoClust <- function(x, ...){
-    pheatmap::pheatmap(x, cluster_cols = FALSE, cluster_rows = FALSE, ...)
-}
-
 # Logistic Model training using STORM$CALLS object.
 trainLogModel_RNAmods <- function(STORM, isModFun, modNuc, thresholds){
     CALLS <- STORM$CALLS[[1]][[modNuc]] %>% data.frame()
@@ -674,7 +630,7 @@ trainLogModel_RNAmods <- function(STORM, isModFun, modNuc, thresholds){
         CALLS$logPred <- stats::predict(logMod, newdata = CALLS, type = "response")
         sapply(thresholds, function(x) MCC(CALLS$logPred, CALLS$isMod, x))
     }) %>% do.call(what = cbind) %>% magrittr::set_rownames(thresholds) %>% magrittr::set_colnames(combNames)
-    selComb <- which.max(matrixStats::colMedians(OUT))
+    selComb <- which.max(apply(OUT, 2, median))
     selThr <- which.max(OUT[,selComb])
     # FinalModel
     tData <- CALLS[, c(allCombVar[[selComb]], "isMod")]
@@ -731,36 +687,6 @@ hasDups <- function(x){
 storm_reduceToGA <- function(STORM, geneAnnot){
     STORM$DATA <- lapply(STORM$DATA, function(DT) DT[gene %in% geneAnnot$name,])
     return(STORM)
-}
-
-# Train RF and CP models
-train_RF_CP <- function(STORM, RNAmodsList, varList){
-    #RandomFores models
-    RES <- STORM$RES
-    nucList_Sc <- lapply(RNAmodsList, function(i) RES$nuc %in% i)
-    CP_models <- lapply(seq_along(RNAmodsList), function(i){
-        selVars <- lapply(varList[[i]], function(i){
-            grep(pattern = i, x = names(RES), value = TRUE)}) %>% unlist
-        tmpData <- data.frame(magrittr::set_colnames(RES[, selVars, with = F], varList[[i]]),
-                              RNAmod = factor(nucList_Sc[[i]]))
-        CPmodel <- lapply(varList[[i]], function(iVar){
-            tmpC <- cutpointr::cutpointr(tmpData[, iVar], tmpData[, "RNAmod"],
-                                         method = cutpointr::maximize_metric, metric = cutpointr::sum_sens_spec,
-                                         direction = ">=", pos_class = TRUE,
-                                         use_midpoints = TRUE, na.rm = TRUE)
-            tmpC$predictor <- iVar
-            tmpC
-        })
-        CPmodel
-    })
-    RES[is.na(RES)] <- 0
-    RF_models <- lapply(seq_along(varList), function(i){
-        selVars <- lapply(varList[[i]], function(i) grep(pattern = i, x = names(RES), value = TRUE)) %>% unlist
-        tmpDat <- RES[, selVars, with = F] %>% magrittr::set_colnames(varList[[i]])
-        randomForest::randomForest(x = tmpDat, y = factor(nucList_Sc[[i]]))
-    })
-    #CutPointer
-    list(RNAmodList = RNAmodsList, RF_models = RF_models, CP_models = CP_models)
 }
 
 # storm_calls: Makes predictions based on RF and CutPointR for each modification
