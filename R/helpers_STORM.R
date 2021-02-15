@@ -6,6 +6,12 @@ mkTmpDir <- function(){
     if(!dir.exists("./STORMtmp_dir")){dir.create("./STORMtmp_dir")}
 }
 
+#' Remove temporary directory
+#'
+#' @return
+#' @export
+#'
+#' @examples
 rmTmpDir <- function(){
     if(dir.exists("./STORMtmp_dir")){unlink("./STORMtmp_dir", recursive = TRUE)}
 }
