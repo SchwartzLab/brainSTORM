@@ -21,7 +21,9 @@ Remotes:
     bioc::IRanges,
     bioc::ShortRead,
     bioc::Rsamtools,
-    bioc::S4Vectors
+    bioc::S4Vectors,
+    bioc::GenomicAlignments,
+    bioc::plyranges
 Imports: 
     txtools (>= 0.0.4),
     parallel,
