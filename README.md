@@ -8,10 +8,9 @@
 
 ## Description
 
-**brainSTORM** is a package that processes RNA-seq reads alignments into
-transcriptomic-oriented objects, making use of the
-[**txtools**](https://github.com/AngelCampos/txtools) package, to
-process STORMseq-based data.
+**brainSTORM** is a package that processes STORMseq-based data, making
+use of the [**txtools**](https://github.com/AngelCampos/txtools)
+package.
 
 ## Quick example
 
