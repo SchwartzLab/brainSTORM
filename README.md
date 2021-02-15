@@ -24,7 +24,7 @@ following commands in the R console:
 ``` r
 if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
-remotes::install_github("SchwartzLab/brainSTORM", auth_token = "YOUR_TOKEN")
+remotes::install_github("SchwartzLab/brainSTORM")
 ```
 
 ## Further documentation
