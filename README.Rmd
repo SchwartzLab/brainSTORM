@@ -34,7 +34,7 @@ commands in the R console:
 ```{r, installation, eval = F}
 if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
-remotes::install_github("SchwartzLab/brainSTORM")
+remotes::install_github("SchwartzLab/brainSTORM", build_vignettes = TRUE)
 ```
 
 ## Further documentation

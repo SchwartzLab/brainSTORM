@@ -44,3 +44,4 @@ vignettes/*.pdf
 STORMtmp_dir
 fastq
 bam_Pa
+inst/doc
