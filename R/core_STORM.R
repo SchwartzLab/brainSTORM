@@ -65,7 +65,6 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
                                  minReads = minR,
                                  withSeq = lSeq,
                                  verbose = verb)
-    GenomicAlignments::width(txReads) %>% lapply(function(x) stats::quantile(x, 0.99))
     # Filter by length
     if(!is.na(remL)){
         txReads <- txtools::tx_filter_maxWidth(x = txReads, thr = remL, nCores = nCores)
