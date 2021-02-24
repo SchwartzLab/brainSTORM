@@ -489,49 +489,6 @@ ggMetricsPos <- function(STORM, title){
         ggplot2::ggtitle(title) + ggplot2::xlab("txCoor")
 }
 
-# Initializa STORM$CALLS
-hlp_start_CALLS <- function(STORM){
-    STORM$CALLS <- lapply(seq_along(unique(STORM$META$set)), function(x) {
-        lapply(RNAmods_vec, function(x) NULL) %>% magrittr::set_names(RNAmods_vec)
-    })
-    names(STORM$CALLS) <- unique(STORM$META$set)
-    STORM
-}
-
-# Assign scores to respective RNAmods in STORM$CALLS
-hlp_assign_scores <- function(STORM, RNAmod, scores){
-    tmp <- STORM$RES %>%
-        tidyr::pivot_wider(names_from = metric, values_from = score) %>%
-        data.table::data.table()
-    selVars <- c(storm_baseCols, scores)
-    tmp <- tmp[,names(tmp) %in% selVars, with = FALSE]
-    tmp <- split(tmp, tmp$set)
-    for(iN in names(tmp)){
-        STORM$CALLS[[iN]][[RNAmod]] <- tmp[[iN]]
-    }
-    STORM
-}
-
-
-#' Assigning predefined Scores
-#'
-#' @param STORM
-#'
-#' @return
-#' @export
-#'
-#' @examples
-storm_makeCalls <- function(STORM){
-    hlp_start_CALLS(STORM) %>%
-        hlp_assign_scores("Y", Y_scores) %>%
-        hlp_assign_scores("Nm", Nm_scores) %>%
-        hlp_assign_scores("m5C", m5C_scores) %>%
-        hlp_assign_scores("ac4C", ac4C_scores) %>%
-        hlp_assign_scores("m1A", m1A_scores) %>%
-        hlp_assign_scores("m7G", m7G_scores) %>%
-        hlp_assign_scores("m3U", m3U_scores)
-}
-
 # RNAmod logical vectors from character or factor
 is.pseudoU <- function(nucs){nucs %in% c("Y", "Ym")}
 is.2Ome <- function(nucs){nucs %in% c("Am", "Gm", "Um", "Cm", "Ym")}

@@ -1,0 +1,196 @@
+---
+title: "Using_brainSTORM_at_WEXAC"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using_brainSTORM_at_WEXAC}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+```{r, Global Options, echo = F}
+knitr::opts_chunk$set(warning = F, message = F)
+tStart <- Sys.time()
+```
+
+## SETUP
+
+**Packages**
+
+```{r}
+library(brainSTORM)
+library(txtools)
+library(magrittr)
+library(ggplot2)
+library(parallel)
+library(gridExtra)
+```
+
+This are the file paths needed to start the run
+
+```{r}
+# Genome and Gene Annotation
+fastaGenome <- "/home/labs/schwartzlab/miguelg/BIGDATA/genome_references/ribosomal/Sc_ribosomal_seqs.fa"
+bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/ribosomal/Sc_ribosomal_seqs.bed"
+r1Files <- grep(list.files("/home/labs/schwartzlab/joeg/data/lib524/Saccharomyces_cerevisiae_SK1",
+                           full.names = TRUE), pattern = "R1", value = TRUE)
+OUTDIR <- "/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae"
+EXP_NAME <- "S.cerevisiae_SK1-lib524"
+NCORES <- 10
+```
+
+## STAR genome and mapping reads
+
+* Create transcriptome fasta and BED references from genomic versions
+    + This is done so that bisulphite conversion is done accordingly to strand orientation.
+* STAR Genomes generation
+
+```{r, eval = FALSE}
+fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = NCORES)
+bedTxOme <- mkBedFromFastaTxOme(fastaTxOme)
+
+# 
+bisTxPath <- bisGenome(fastaTxOme)
+STARGenome <- mkSTARgenome(fastaTxOme, bedTxOme)
+STARGenome_bis <- mkSTARgenome(bisTxPath, bedTxOme)
+```
+
+* Design matrix from R1 Fasta files.
+
+```{r}
+vList <- list(organism = c("PyroAbyss", "TherAcid", "Yeast", "Human"), 
+              RTase = c("SSIII", "SSIV", "TGIRT", "RTHIV"),
+              libTreat = c("Ac4C", "CMC", "DeacetylatedAc4C", "MocklowdNTPs",
+                           "Mock", "Dimroth", "m5C", "AlkBmix", "RBSseqHeatMg", "NaBH4HydBiotin"),
+              bioTreat = c("80deg", "95deg", "100deg", "AcidpH1", "AcidpH2", "AcidpH3"))
+
+META <- storm_META(fileNames = r1Files,
+                   varsList = vList,
+                   setVars = "organism",
+                   idVars = c("organism", "RTase", "libTreat"),
+                   groupVars = c("libTreat", "RTase"), 
+                   outDir = OUTDIR)
+META
+```
+
+* Read mapping to reference transcriptome using STAR
+
+```{r, eval = FALSE}
+if(!all(file.exists(META$BAM))){
+    # STAR Alignment
+    alignSTAR(read1Files = META[libTreat != "m5C" & libTreat != "RBSseqHeatMg", FASTQ], 
+              nCores = NCORES, 
+              zipped = TRUE,
+              STARgenomeDir = STARGenome, 
+              alignEndsType = "Local", 
+              outSAMtype = "BAM Unsorted", 
+              outDir = OUTDIR)
+    alignSTAR(read1Files = META[libTreat == "m5C" | libTreat == "RBSseqHeatMg", FASTQ], 
+              nCores = NCORES, 
+              zipped = TRUE,
+              STARgenomeDir = STARGenome_bis, 
+              alignEndsType = "Local", 
+              outSAMtype = "BAM Unsorted", 
+              outDir = OUTDIR)
+}
+```
+
+## Processing to count data tables using txtools
+
+* Process all BAM into TxDT
+
+```{r, eval = FALSE}
+GENOME <- txtools::tx_load_genome(fastaTxOme)
+TXOME <- txtools::tx_load_bed(bedTxOme)
+
+if(!all(file.exists(META$RDS))){
+    rdsFiles <- parallel::mclapply(mc.cores = NCORES, seq_along(META$FASTQ), function(i){
+        bam2TxDT(BAMfile = META$BAM[i], 
+                 geneAnnot = TXOME, 
+                 genome = GENOME, 
+                 dtType = "covNuc", 
+                 outDir = OUTDIR, 
+                 nCores = 1, 
+                 remL = 1000, 
+                 minR = 0)
+    })
+}
+```
+
+## Reports
+
+* Alignment report
+
+```{r}
+# Lib Complexity 
+# libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
+ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt"), speciesName = EXP_NAME)
+plot(ggLCE)
+```
+
+* Nucleotide frequency
+
+```{r}
+nucF <- fastq_nucFreq(META, NCORES, firstN =  1e5)
+ggNucF <- gg_nucFreq(nucF, EXP_NAME)
+plot(ggNucF)
+```
+
+* Alignment efficiency report
+
+```{r, eval = FALSE}
+rReport <- reads_report(META, NCORES)
+ggReadStats <- gg_readStats(rReport, EXP_NAME)
+gridExtra::grid.arrange(ggReadStats[[1]], ggReadStats[[2]], ncol = 2)
+```
+
+## STORMbrain
+
+* STORM object creation
+* Metric calculations (for TGIRT and SSIII)
+* Logistic model fit
+
+```{r, eval = FALSE}
+STORM <- storm_STORM(META, GENOME, TXOME, NCORES) 
+
+# Save STORM object
+saveRDS(STORM, file = file.path(OUTDIR, "STORM_Sc_lib524.rds"))
+```
+
+## Metrics
+
+```{r}
+STORM <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae/STORM_Sc_lib524.rds")
+STORM_cp <- STORM %>% add_Y_metrics()
+STORM$META$group
+STORM_cp <- STORM %>% 
+    add_SRD1bpDS("CMC.TGIRT", "Mock.TGIRT") %>%
+    add_SRD1bpDS("CMC.SSIII", "Mock.SSIII") %>%
+    add_SRlog2FCh1bpDS("CMC.TGIRT", "Mock.TGIRT") %>%
+    add_SRlog2FCh1bpDS("CMC.SSIII", "Mock.SSIII") %>%
+    add_DRD("RBSseqHeatMg.TGIRT", "Mock.TGIRT") %>%
+    add_DRD("RBSseqHeatMg.SSIII", "Mock.SSIII") %>%
+    add_DRD("m5C.TGIRT", "Mock.TGIRT") %>% 
+    add_DRD("m5C.SSIII", "Mock.SSIII") 
+STORM_cp$RES$metric %>% unique
+
+```
+
+
+# Session Info
+
+```{r, Session Info, echo = FALSE}
+tEnd <- Sys.time()
+sessionInfo()
+tDif <- tEnd - tStart
+cat("Time to knit notebook:", round(tDif, 2), units(tDif))
+```

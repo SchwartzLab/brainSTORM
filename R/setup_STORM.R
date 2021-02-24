@@ -32,11 +32,14 @@ storm_META <- function(fileNames, varsList, groupVars, setVars, idVars, outDir){
         apply(MARGIN = 1, function(x){paste(x, collapse= ".")}) %>% factor()
     DT$id <- data.frame(DT[, idVars, with = FALSE]) %>%
         apply(MARGIN = 1, function(x){paste(x, collapse= ".")}) %>% as.character()
-    if(sum(duplicated(DT$id)) !=0){
+    if(sum(duplicated(DT$id)) != 0){
         warning("Generated ids are not unique per sample")
     }
     if(sum(duplicated(paste(DT$group, DT$set)))){
         warning("Combinations of group and set should be unique between samples")
+    }
+    if(sum(DT$libTreat == "") != 0){
+        warning("Some samples lack libTreat")
     }
     rootNames <- DT$FASTQ %>% lapply(function(x){strsplit(x, split = "/") %>%
             unlist %>% utils::tail(1)}) %>% unlist %>% gsub(pattern = "_R1(.)+", replacement = "")
