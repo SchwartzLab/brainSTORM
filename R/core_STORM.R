@@ -29,16 +29,13 @@ bam2TxDT <- function(BAMfile, geneAnnot, genome, dtType, paired = TRUE,
     }else if(dtType == "covNuc"){
         lSeq <- TRUE
     }else{
-        stop("-d --DT_datatype argument must be one of the options: 'cov' or 'covNuc'")
+        stop("dtType argument must be one of the options: 'cov' or 'covNuc'")
     }
     # Check yieldSize to be integer
     txtools:::check_integer_arg(ySize, "ySize")
     # Set OUTPUT filename
     outName <- strsplit(BAMfile, split = "/") %>% unlist %>% utils::tail(1) %>%
         gsub(x = ., pattern = ".bam$", replacement = ".txDT.rds", perl = T)
-    if(!(dtType == "cov" | dtType == "covNuc")){
-        stop("-d parameter is neither 'cov', nor 'covNuc'")
-    }
     # Output all genes even with no reads overlapping
     if(minR == 0){makeFULL <- TRUE}else{makeFULL <- FALSE}
     if(minR == 0){minR <- 1}
