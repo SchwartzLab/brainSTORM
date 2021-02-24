@@ -4,7 +4,14 @@
 \alias{add_CtoT_MRD}
 \title{Add C->T misincorporation difference (CtoT_MRD) to STORM object}
 \usage{
-add_CtoT_MRD(STORM, group_A, group_B, newColName = "auto", onNucs = c("C"))
+add_CtoT_MRD(
+  STORM,
+  group_A,
+  group_B,
+  newColName = "auto",
+  onNucs = c("C"),
+  minCov = 50
+)
 }
 \arguments{
 \item{onNucs}{}

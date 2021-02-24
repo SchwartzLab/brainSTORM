@@ -166,25 +166,12 @@ STORM <- storm_STORM(META, GENOME, TXOME, NCORES)
 saveRDS(STORM, file = file.path(OUTDIR, "STORM_Sc_lib524.rds"))
 ```
 
-## Metrics
+## Metrics calculation and assignment to RNAmods
 
 ```{r}
 STORM <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae/STORM_Sc_lib524.rds")
-STORM_cp <- STORM %>% add_Y_metrics()
-STORM$META$group
-STORM_cp <- STORM %>% 
-    add_SRD1bpDS("CMC.TGIRT", "Mock.TGIRT") %>%
-    add_SRD1bpDS("CMC.SSIII", "Mock.SSIII") %>%
-    add_SRlog2FCh1bpDS("CMC.TGIRT", "Mock.TGIRT") %>%
-    add_SRlog2FCh1bpDS("CMC.SSIII", "Mock.SSIII") %>%
-    add_DRD("RBSseqHeatMg.TGIRT", "Mock.TGIRT") %>%
-    add_DRD("RBSseqHeatMg.SSIII", "Mock.SSIII") %>%
-    add_DRD("m5C.TGIRT", "Mock.TGIRT") %>% 
-    add_DRD("m5C.SSIII", "Mock.SSIII") 
-STORM_cp$RES$metric %>% unique
-
+STORM <- STORM %>% add_default_metrics_v2() %>% storm_makeCalls()
 ```
-
 
 # Session Info
 

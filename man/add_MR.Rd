@@ -4,7 +4,13 @@
 \alias{add_MR}
 \title{Add Missincorporation rate}
 \usage{
-add_MR(STORM, group_A, newColName = "auto", onNucs = c("A", "C", "G", "T"))
+add_MR(
+  STORM,
+  group_A,
+  newColName = "auto",
+  onNucs = c("A", "C", "G", "T"),
+  minCov = 50
+)
 }
 \arguments{
 \item{onNucs}{}

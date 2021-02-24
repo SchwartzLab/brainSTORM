@@ -4,7 +4,14 @@
 \alias{add_CytPer}
 \title{Add cytidine persistance index to STORM object}
 \usage{
-add_CytPer(STORM, group_A, group_B, newColName = "auto", onNucs = c("C"))
+add_CytPer(
+  STORM,
+  group_A,
+  group_B,
+  newColName = "auto",
+  onNucs = c("C"),
+  minCov = 50
+)
 }
 \arguments{
 \item{onNucs}{}

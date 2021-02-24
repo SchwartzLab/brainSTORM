@@ -2,7 +2,7 @@
 % Please edit documentation in R/metrics.R
 \name{storm_makeCalls}
 \alias{storm_makeCalls}
-\title{Assigning predefined Scores}
+\title{Assigning default Scores}
 \usage{
 storm_makeCalls(STORM)
 }
@@ -13,5 +13,5 @@ storm_makeCalls(STORM)
 
 }
 \description{
-Assigning predefined Scores
+Assigning default Scores
 }

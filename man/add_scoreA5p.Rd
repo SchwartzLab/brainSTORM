@@ -10,7 +10,7 @@ add_scoreA5p(
   group_A,
   newColName = "auto",
   onNucs = c("A", "C", "G", "T"),
-  minMedCov = 15
+  minMedCov = 30
 )
 }
 \arguments{

@@ -8,7 +8,8 @@ add_SR_1bpDS(
   STORM,
   group_A,
   newColName = "auto",
-  onNucs = c("A", "C", "G", "T")
+  onNucs = c("A", "C", "G", "T"),
+  minCov = 50
 )
 }
 \arguments{
