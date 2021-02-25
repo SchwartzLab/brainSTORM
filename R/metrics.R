@@ -395,7 +395,7 @@ add_2OmeScore <- function(STORM,
         id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == lib_HighdNTPs,]$id
         DT <- detect_2OmeScore(DT_low = STORM$DATA[[id_A]],
                                DT_high = STORM$DATA[[id_B]],
-                               flankSize = flankSize,
+                               neighFlankSize = flankSize,
                                minCov = minCov)
         tmpRES <- data.table::data.table(twoOme_score = DT$twoOme_score)
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)

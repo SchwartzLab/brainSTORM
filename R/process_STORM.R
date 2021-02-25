@@ -92,7 +92,8 @@ fastq_nucFreq <- function(META, nCores, firstN = 1e4){
 #'
 #' @examples
 gg_nucFreq <- function(nucF_x, subtitle){
-    tmp <- prop.table(nucF_x, margin = 2) %>% data.frame %>% tibble::rownames_to_column(var = "nuc") %>%
+    tmp <- prop.table(nucF_x, margin = 2) %>% data.frame %>%
+        tibble::rownames_to_column(var = "nuc") %>%
         tidyr::pivot_longer(cols = -nuc, names_to = "Sample", values_to = "Ratio")
     ggplot2::ggplot(tmp, ggplot2::aes(x = Sample, y = Ratio, fill = nuc)) +
         ggplot2::geom_bar(stat = "identity") +
@@ -276,29 +277,6 @@ SSIII_metrics <- function(STORM){
         add_MRD("DeacetylatedAc4C", "Ac4C") %>%
         storm_add_scoreA3p("Mock") %>%
         add_SRD1bpDS("DeacetylatedAc4C", "Ac4C")
-}
-
-
-# Boxplot of $RES calculated metrics grouping by modified nucleotides
-ggMetricsNuc <- function(STORM, title){
-    tmpDT <- STORM$RES %>% stats::na.omit()
-    ggplot2::ggplot(tmpDT, ggplot2::aes(x = nuc, y = score)) + ggplot2::geom_boxplot(outlier.colour = NA) +
-        ggplot2::geom_point(ggplot2::aes(colour = metric), alpha = 0.2) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
-        ggplot2::facet_wrap(~metric, scales = "free") +
-        ggplot2::ggtitle(title)
-}
-
-# Plot scatterplot of scores colored by gene by tx coordinate
-ggMetricsPos <- function(STORM, title){
-    tmpDT <- STORM$RES %>% stats::na.omit()
-    ggplot2::ggplot(tmpDT) +
-        ggplot2::geom_point(ggplot2::aes(x = tmpDT$pos, y = tmpDT$score, colour = tmpDT$gene), alpha = 0.2) +
-        ggplot2::facet_grid(tmpDT$metric~tmpDT$set, scales = "free") +
-        ggplot2::theme_bw() +
-        ggplot2::theme(axis.text.x = ggplot2::element_blank()) +
-        ggplot2::ggtitle(title) + ggplot2::xlab("txCoor")
 }
 
 # RNAmod logical vectors from character or factor

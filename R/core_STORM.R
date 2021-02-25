@@ -227,3 +227,51 @@ mkBedFromFastaTxOme <- function(fastaTxOme, outFile = "auto"){
     plyranges::write_bed(tmp, file = outFile)
     outFile
 }
+
+#' Add known RNA modifications nucleotide identity
+#'
+#' Add the nucleotide identity based on a table with columns "pos" and "nuc
+#' establishing the position and nucleotide identity
+#' Useful to annotate already known RNA modifications. The function will add
+#' a column called "nuc" in the "RES" and "CALLS" tables.
+#'
+#' @param STORM STORM object
+#' @param RNAmods data.frame with two columns "pos" for the positions in the
+#' same format as the tables inside the STORM object as STORM$RES, a combination
+#' in the form of "gene:txcoor"; And "nuc" for the identity of the nucleotide
+#' on said position.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+addKnownRNAmods <- function(STORM, RNAmods){
+    if("RES" %in% names(STORM)){
+        if("refSeq" %in% names(STORM$RES)){
+            STORM$RES <- tibble::add_column(nuc = factor(RNAmods$nuc[match(STORM$RES$pos, RNAmods$pos)]),
+                               .after = "refSeq",
+                               .data = STORM$RES)
+        }else{
+            STORM$RES$nuc <- factor(RNAmods$nuc[match(STORM$RES$pos, RNAmods$pos)])
+        }
+    }
+    if("CALLS" %in% names(STORM)){
+        for(set in unique(STORM$META$set)){
+            for(i in seq_along(STORM$CALLS[[set]])){
+                tmp <- factor(RNAmods$nuc[match(STORM$CALLS[[set]][[i]]$pos, RNAmods$pos)])
+                if("refSeq" %in% names(STORM$CALLS[[set]][[i]])){
+                    STORM$CALLS[[set]][[i]] <- tibble::add_column(nuc = tmp,
+                                                                  .after = "refSeq",
+                                                                  .data = STORM$CALLS[[set]][[i]])
+                }else{
+                    STORM$CALLS[[set]][[i]] <- tibble::add_column(nuc = tmp,
+                                                                  .data = STORM$CALLS[[set]][[i]])
+                }
+            }
+        }
+    }else{
+        stop("RES is not part of the STORM object structure. ",
+             "Metrics have not been calculated.")
+    }
+    STORM
+}
