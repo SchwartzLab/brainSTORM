@@ -1,6 +1,6 @@
 Package: brainSTORM
 Title: brainSTORM. A package to process STORM-seq based data
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: 
     person(given = "Miguel Angel",
            family = "Garcia-Campos",
