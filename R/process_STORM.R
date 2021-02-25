@@ -29,25 +29,6 @@ storm_summary <- function(STORM){
     STORM
 }
 
-
-# Add results to a STORM object. Remove scores if metric is already present.
-hlpr_add_REScols <- function(STORM_RES, REScols){
-    iMetric <- unique(REScols[,"metric"]) %>% as.character()
-    # remove results for identical metric
-    if("metric" %in% names(STORM_RES)){
-        STORM_RES <- STORM_RES[STORM_RES$metric != iMetric,]
-    }
-    STORM_RES <- rbind(STORM_RES, REScols)
-    STORM_RES
-}
-
-# List files in work dir that match pattern pat
-listFilePatt <- function(pattern, path = "."){
-    files <- list.files(path)[grep(pattern = pattern, x = list.files(path))]
-    return(files)
-}
-
-
 # Notebook 1 ###################################################################
 
 # Tables of files from FASTQ to expected BAM and RDS targets

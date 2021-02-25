@@ -151,3 +151,35 @@ libComplexReport <- function(META, maxExtrapolation = 2.01e6, steps = 1e5, verbo
     if(verbose){cat("DONE: Library complexity reports.")}
 }
 
+# Extract gene sequences from genome and geneAnnotation
+getGeneSeqsfromGenome <- function(geneAnnot, genome, nCores = 1){
+    txtools:::check_mc_windows(nCores)
+    txtools:::check_GA_genome_chrCompat(geneAnnot = geneAnnot, genome = genome)
+    parallel::mclapply(mc.cores = nCores, seq_along(geneAnnot), function(i){
+        selGene <- geneAnnot[i]
+        iGene <- as.character(selGene$name)
+        iChr <- as.character(GenomicRanges::seqnames(selGene))
+        iStr <- as.character(selGene@strand)
+        iGA <- selGene
+        iBlocks <- S4Vectors::mcols(iGA)$blocks %>% txtools:::if_IRangesList_Unlist() %>%
+            IRanges::shift(IRanges::start(iGA) - 1)
+        SEQ <- stringr::str_sub(genome[[iChr]], start = IRanges::start(iBlocks),
+                                end = IRanges::end(iBlocks)) %>% paste(collapse = "") %>%
+            Biostrings::DNAString()
+        if(iStr == "-") {
+            SEQ <- Biostrings::reverseComplement(SEQ)
+        }
+        SEQ
+    }) %>% Biostrings::DNAStringSet()
+}
+
+# Add results to a STORM object. Remove scores if metric is already present.
+hlpr_add_REScols <- function(STORM_RES, REScols){
+    iMetric <- unique(REScols[,"metric"]) %>% as.character()
+    # remove results for identical metric
+    if("metric" %in% names(STORM_RES)){
+        STORM_RES <- STORM_RES[STORM_RES$metric != iMetric,]
+    }
+    STORM_RES <- rbind(STORM_RES, REScols)
+    STORM_RES
+}
