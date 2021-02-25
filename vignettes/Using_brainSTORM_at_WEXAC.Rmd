@@ -152,7 +152,7 @@ plot(ggNucF)
 
 * Alignment efficiency report
 
-```{r, eval = FALSE}
+```{r}
 rReport <- reads_report(META, NCORES)
 ggReadStats <- gg_readStats(rReport, EXP_NAME)
 gridExtra::grid.arrange(ggReadStats[[1]], ggReadStats[[2]], ncol = 2)
@@ -174,8 +174,6 @@ saveRDS(STORM, file = file.path(OUTDIR, "STORM_Sc_lib524.rds"))
 
 The resulting STORM score contain 
 ```{r}
-rm(list = ls())
-load_all()
 STORM <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae/STORM_Sc_lib524.rds")
 STORM <- STORM %>% add_default_metrics_v2() %>% storm_makeCalls()
 
@@ -187,10 +185,14 @@ STORM <- addKnownRNAmods(STORM, rRNAmods_Sc)
 ## Plotting some scores
 
 ```{r}
-ggMetricsNuc(STORM)
-ggMetricsNuc(STORM, Y_scores, "Yeast - PseudoU scores")
+storm_metricsBoxPlot_byNuc(STORM, Y_scores, "Yeast - PseudoU scores")
+storm_metricsBoxPlot_byNuc(STORM, Nm_scores, "Yeast - 2Ometh scores")
+storm_metricsBoxPlot_byNuc(STORM, ac4C_scores, "Yeast - ac4C scores")
+storm_metricsBoxPlot_byNuc(STORM, m7G_scores, "Yeast - m7G scores")
+storm_metricsBoxPlot_byNuc(STORM, m1A_scores, "Yeast - m1A scores")
+storm_metricsBoxPlot_byNuc(STORM, m5C_scores, "Yeast - m5C scores")
+storm_metricsBoxPlot_byNuc(STORM, m3U_scores, "Yeast - m3U scores")
 ```
-
 
 # Session Info
 
