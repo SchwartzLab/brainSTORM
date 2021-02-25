@@ -7,7 +7,7 @@
 add_default_metrics_v1(STORM)
 }
 \arguments{
-\item{STORM}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
 }
 \value{
 

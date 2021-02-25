@@ -2,12 +2,11 @@
 
 #' Add all default metrics for STORMseq v0.0.2
 #'
-#' @param STORM
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
 #'
 #' @return
 #' @export
 #'
-#' @examples
 add_default_metrics_v2 <- function(STORM){
     STORM %>%
         add_2OmeScore("MocklowdNTPs.SSIII", "Mock.SSIII", perNuc_Zscaling = T) %>%
@@ -46,7 +45,7 @@ add_default_metrics_v2 <- function(STORM){
 
 #' Add all default metrics for STORMseq v0.0.1
 #'
-#' @param STORM
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
 #'
 #' @return
 #' @export
@@ -79,46 +78,6 @@ add_default_metrics_v1 <- function(STORM){
         add_CytPer("m5C.TGIRT", "Mock.TGIRT") %>%
         add_MRD("Mock.TGIRT", "AlkBmix.TGIRT")
 }
-
-Y_scores <- c("SRD1bpDS_CMC.TGIRT_Mock.TGIRT",
-              "SRD1bpDS_CMC.SSIII_Mock.SSIII",
-              "SRlog2FCh1bpDS_CMC.TGIRT_Mock.TGIRT",
-              "SRlog2FCh1bpDS_CMC.SSIII_Mock.SSIII",
-              "DRD_m5C.TGIRT_Mock.TGIRT",
-              "DRD_RBSseqHeatMg.SSIII_Mock.SSIII",
-              "DRD_RBSseqHeatMg.TGIRT_Mock.TGIRT")
-
-Nm_scores <- c("NmStopScore_MocklowdNTPs.SSIII_Mock.SSIII",
-               "ScoreA3p_Mock.TGIRT",
-               "ScoreA3p_Mock.SSIII",
-               "ScoreA3p_Mock.RTHIV")
-
-ac4C_scores <- c("CtoT.MRD_Ac4C.TGIRT_Mock.TGIRT",
-                 "CtoT.MRD_Ac4C.TGIRT_DeacetylatedAc4C.TGIRT",
-                 "CtoT.MRD_Ac4C.SSIII_Mock.SSIII",
-                 "CtoT.MRD_Ac4C.SSIII_DeacetylatedAc4C.SSIII")
-
-m1A_scores <- c("SRD1bpDS_Mock.SSIII_Dimroth.SSIII",
-                "SRlog2FCh1bpDS_Mock.SSIII_Dimroth.SSIII",
-                "MRD_Mock.TGIRT_Dimroth.TGIRT",
-                "MRD_Mock.SSIII_RBSseqHeatMg.SSIII",
-                "MRD_Mock.TGIRT_RBSseqHeatMg.TGIRT",
-                "MRD_Mock.TGIRT_AlkBmix.TGIRT")
-
-m7G_scores <- c("MRD_DeacetylatedAc4C.TGIRT_Ac4C.TGIRT",
-                "MRD_DeacetylatedAc4C.SSIII_Ac4C.SSIII",
-                "SRD1bpDS_DeacetylatedAc4C.TGIRT_Ac4C.TGIRT",
-                "SRD1bpDS_DeacetylatedAc4C.SSIII_Ac4C.SSIII",
-                "SRlog2FCh1bpDS_DeacetylatedAc4C.SSIII_Ac4C.SSIII",
-                "SRlog2FCh1bpDS_DeacetylatedAc4C.TGIRT_Ac4C.TGIRT",
-                "SRD_NaBH4HydBiotin.RTHIV_Mock.RTHIV",
-                "SRD_NaBH4HydBiotin.TGIRT_Mock.TGIRT")
-
-m5C_scores <- c("CytPer_m5C.TGIRT_Mock.TGIRT",
-                "CytPer_RBSseqHeatMg.SSIII_Mock.SSIII",
-                "CytPer_RBSseqHeatMg.TGIRT_Mock.TGIRT")
-
-m3U_scores <- c("MRD_Mock.TGIRT_AlkBmix.TGIRT")
 
 add_Y_metrics <- function(STORM){
     STORM %>%
@@ -184,7 +143,7 @@ add_m3U_metrics <- function(STORM){
 
 #' Initialize STORM$CALLS
 #'
-#' @param STORM
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
 #' @param RNAmods character Vector of RNA modification symbols to assign scores
 #' to. By default = brainSTORM::RNAmods_vec.
 #'
@@ -202,7 +161,7 @@ hlp_start_CALLS <- function(STORM, RNAmods = RNAmods_vec){
 
 #' Assign scores to respective RNAmods in STORM$CALLS
 #'
-#' @param STORM
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
 #' @param RNAmod
 #' @param scores
 #'
@@ -230,9 +189,9 @@ hlp_assign_scores <- function(STORM, RNAmod, scores){
 }
 
 
-#' Assigning default Scores
+#' Assigning default Scores to tables by sets of samples
 #'
-#' @param STORM
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
 #'
 #' @return
 #' @export
@@ -259,12 +218,13 @@ storm_makeCalls <- function(STORM){
 #' Calculates the start ratio difference of group_A minus that
 #' of group_B per set of samples in a STORM object.
 #'
-#' @param STORM
-#' @param group_A
-#' @param group_B
-#' @param newColName
-#' @param onNucs
-#' @param minCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -297,18 +257,18 @@ add_SRD <- function(STORM, group_A, group_B, newColName = "auto",
     return(STORM)
 }
 
-
 #' Add Start Ratio Difference 1bp down-stream
 #'
 #' Calculates the start ratio difference 1bp down-stream of group_A minus that
 #' of group_B per set of samples in a STORM object.
 #'
-#' @param STORM
-#' @param group_A
-#' @param group_B
-#' @param newColName
-#' @param onNucs
-#' @param minCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -341,17 +301,18 @@ add_SRD1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
     return(STORM)
 }
 
-#' Add Start rate log2-Fold-Change 1bp down-stream
+#' Add Start ratio log2-Fold-Change 1bp down-stream
 #'
 #' Calculates the log2-Fold-Change of the start ratio difference 1bp down-stream
 #' of group_A over that of group_B per set of samples in a STORM object.
 #'
-#' @param STORM
-#' @param group_A
-#' @param group_B
-#' @param newColName
-#' @param onNucs
-#' @param minCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -387,14 +348,30 @@ add_SRlog2FCh1bpDS <- function(STORM, group_A, group_B, newColName = "auto",
 
 #' Add 2-O-methylation score to STORM-seq object
 #'
-#' @param STORM
-#' @param lib_LowdNTPs
-#' @param lib_HighdNTPs
-#' @param newColName
-#' @param neighFlankSize
+#' Methylation score that considers the log2-FCH of start ratio between
+#' two RNA-seq libraries (low-dNTPs and high-dNTPs), subtracting the "noise"
+#' from a surrounding window.
+#'
+#' Incarnato et al. 2017: For Nm Incarnato and collabs. used the fold change
+#' as the log2 of the ratio between the stoppage ratio at the low dNTPs
+#' concentration and the stoppage ratio in the high dNTPs concentration sample.
+#'  Because the stoppage ratio seems to be strongly region specific, they
+#'  subtracted the local background defined as the mean ratio of the stoppage
+#'  in the neighborhood of a given position (+/- 5 nucleotides, excluding
+#'  given position).
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param lib_LowdNTPs character. Name of group with low-dNTPs library preparation
+#' found in STORM$META$group
+#' @param lib_HighdNTPs character. Name of group with high-dNTPs library preparation
+#' found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param flankSize integer. Length of window to each side of position to
+#' consider for metric calculation
 #' @param perNuc_Zscaling
-#' @param onNucs
-#' @param minCov
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -404,7 +381,7 @@ add_2OmeScore <- function(STORM,
                           lib_LowdNTPs,
                           lib_HighdNTPs,
                           newColName = "auto",
-                          neighFlankSize = 5,
+                          flankSize = 5,
                           perNuc_Zscaling = F,
                           onNucs = c("A", "C", "G", "T"), minCov = 50){
     if(newColName == "auto"){
@@ -418,7 +395,7 @@ add_2OmeScore <- function(STORM,
         id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == lib_HighdNTPs,]$id
         DT <- detect_2OmeScore(DT_low = STORM$DATA[[id_A]],
                                DT_high = STORM$DATA[[id_B]],
-                               neighFlankSize = neighFlankSize,
+                               flankSize = flankSize,
                                minCov = minCov)
         tmpRES <- data.table::data.table(twoOme_score = DT$twoOme_score)
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
@@ -443,7 +420,20 @@ add_2OmeScore <- function(STORM,
     return(STORM)
 }
 
-# Add Misincorporation Rate Difference (MRD) treatA-treatB to STORM object
+#' Add Misincorporation Rate Difference
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
+#'
+#' @return
+#' @export
+#'
+#' @examples
 add_MRD <- function(STORM, group_A, group_B, newColName = "auto",
                     onNucs = c("A", "C", "G", "T"), minCov = 50){
     if(newColName == "auto"){
@@ -474,11 +464,16 @@ add_MRD <- function(STORM, group_A, group_B, newColName = "auto",
 
 #' Add cytidine persistance index to STORM object
 #'
-#' @param STORM
-#' @param group_A
-#' @param group_B
-#' @param newColName
-#' @param onNucs
+#' Cytidine score modified from (Squires et al. 2012). It accounts for positions
+#' with Thymine reads in Cytidine positions in the Control/Mock sample.
+#' CytPer = (C_bisulphite / (C_bisulphite + T_bisulphite)) - (1 - (C_control / C_control + T_control))
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
 #'
 #' @return
 #' @export
@@ -512,13 +507,24 @@ add_CytPer <- function(STORM, group_A, group_B, newColName = "auto",
     return(STORM)
 }
 
-#' Add C->T misincorporation difference (CtoT_MRD) to STORM object
+#' Add C-to-T misincorporation difference
 #'
-#' @param STORM
-#' @param group_A
-#' @param group_B
-#' @param newColName
-#' @param onNucs
+#' Calculates the difference of T conversion at C positions by subtracting the
+#' result of "T"/("T"+"C") between groups. Commonly NaCNBH3-Treated vs
+#' Control or vs Deacetylated negative control.
+#'
+#' The reaction of ac4C with sodium cyanoborohydride (NaCNBH3) under acidic
+#' conditions forms the reduced nucleobase N4-acetyltetrahydrocytidine.
+#' The altered structure of this reduced nucleobase compared with ac4C causes
+#' the incorporation of non-cognate deoxynucleotide triphosphates (dNTPs)
+#' upon reverse transcription (Sas-Chen et al. 2020).
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
 #'
 #' @return
 #' @export
@@ -552,14 +558,19 @@ add_CtoT_MRD <- function(STORM, group_A, group_B, newColName = "auto",
     return(STORM)
 }
 
-#' Add deletion rate difference to STORM object
+#' Add deletion rate difference
 #'
-#' @param STORM
-#' @param group_A
-#' @param group_B
-#' @param newColName
-#' @param onNucs
-#' @param minReadCounts
+#' Calculated the deletion rate to nucleotide reads for each position and
+#' subtracts it for the rate in the control group.
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minReadCounts integer. Minimal number of nucleotide reads (NOT coverage)
+#' in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -595,12 +606,13 @@ add_DRD <- function(STORM, group_A, group_B, newColName = "auto",
 
 # One group metrics ############################################################
 
-#' Add Missincorporation rate
+#' Add Misincorporation Rate
 #'
-#' @param STORM
-#' @param group_A
-#' @param newColName
-#' @param onNucs
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
 #'
 #' @return
 #' @export
@@ -632,13 +644,14 @@ add_MR <- function(STORM, group_A, newColName = "auto",
     return(STORM)
 }
 
-#' Add read-start to coverage ratio
+#' Add Read-start to coverage ratio
 #'
-#' @param STORM
-#' @param group_A
-#' @param newColName
-#' @param onNucs
-#' @param minCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -672,11 +685,12 @@ add_SR <- function(STORM, group_A, newColName = "auto",
 
 #' Add read-start to coverage rate 1 bp down-stream
 #'
-#' @param STORM
-#' @param group_A
-#' @param newColName
-#' @param onNucs
-#' @param minCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -710,11 +724,12 @@ add_SR_1bpDS <- function(STORM, group_A, newColName = "auto",
 
 #' Add read-end to coverage ratio
 #'
-#' @param STORM
-#' @param group_A
-#' @param newColName
-#' @param onNucs
-#' @param minCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -746,13 +761,17 @@ add_ER <- function(STORM, group_A, newColName = "auto",
     return(STORM)
 }
 
-#' Add ScoreA-3prime to a STORM object
+#' Add ScoreA accounting for read-ends (3prime)
 #'
-#' @param STORM
-#' @param group_A
-#' @param newColName
-#' @param onNucs
-#' @param minMedCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minMedCov integer. Minimal median coverage of window around position,
+#' delimited by flankSize
+#' @param flankSize integer. Length of window to each side of position to
+#' consider for metric calculation
 #'
 #' @return
 #' @export
@@ -760,7 +779,8 @@ add_ER <- function(STORM, group_A, newColName = "auto",
 #'
 #' @examples
 add_scoreA3p <- function(STORM, group_A, newColName = "auto",
-                         onNucs = c("A", "C", "G", "T"), minMedCov = 30){
+                         onNucs = c("A", "C", "G", "T"), minMedCov = 30,
+                         flankSize = 6){
     if(newColName == "auto"){
         newColName <- paste("ScoreA3p", group_A, sep = "_")
     }
@@ -768,7 +788,7 @@ add_scoreA3p <- function(STORM, group_A, newColName = "auto",
     if(length(sets) == 0){stop("No sets found with group_A label")}
     OUT <- lapply(sets, function(iSet){
         id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
-        DT_A <- add_scoreA_3p(STORM$DATA[[id_A]], minMedEnv = minMedCov)
+        DT_A <- add_scoreA_3p(STORM$DATA[[id_A]], minMedEnv = minMedCov, flankSize = flankSize)
         tmpRES <- data.table::data.table(DT_A$scoreA_3p)
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
@@ -781,13 +801,17 @@ add_scoreA3p <- function(STORM, group_A, newColName = "auto",
     return(STORM)
 }
 
-#' Add ScoreA-3prime to a STORM object
+#' Add ScoreA accounting for read-starts (5prime)
 #'
-#' @param STORM
-#' @param group_A
-#' @param newColName
-#' @param onNucs
-#' @param minMedCov
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minMedCov integer. Minimal median coverage of window around position,
+#' delimited by flankSize
+#' @param flankSize integer. Length of window to each side of position to
+#' consider for metric calculation
 #'
 #' @return
 #' @export
@@ -795,7 +819,8 @@ add_scoreA3p <- function(STORM, group_A, newColName = "auto",
 #' @examples
 #' @aliases storm_add_scoreA5p
 add_scoreA5p <- function(STORM, group_A, newColName = "auto",
-                         onNucs = c("A", "C", "G", "T"), minMedCov = 30){
+                         onNucs = c("A", "C", "G", "T"), minMedCov = 30,
+                         flankSize = 6){
     if(newColName == "auto"){
         newColName <- paste("ScoreA5p", group_A, sep = "_")
     }
@@ -807,7 +832,8 @@ add_scoreA5p <- function(STORM, group_A, newColName = "auto",
     }
     OUT <- lapply(sets, function(iSet){
         id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
-        DT_A <- add_scoreA_5p(STORM$DATA[[id_A]], minMedEnv = minMedCov)
+        DT_A <- add_scoreA_5p(STORM$DATA[[id_A]], minMedEnv = minMedCov,
+                              flankSize = flankSize)
         tmpRES <- data.table::data.table(DT_A$scoreA_5p)
         tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
         names(tmpRES) <- c("set", "metric", "score")
@@ -822,11 +848,15 @@ add_scoreA5p <- function(STORM, group_A, newColName = "auto",
 
 #' Add deletion rate
 #'
-#' @param STORM
-#' @param group_A
-#' @param newColName
-#' @param onNucs
-#' @param minReadCounts
+#' Adds the deletion to nucleotide reads ratio
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minReadCounts integer. Minimal number of nucleotide reads (NOT coverage)
+#' in position for metric to be calculated
 #'
 #' @return
 #' @export
@@ -918,7 +948,6 @@ detect_2OmeScore <- function(DT_low, DT_high, neighFlankSize = 5, minCov = 50){
     DTL1 <- DT_low %>% txtools::tx_split_DT()
     DTL2 <- DT_high %>% txtools::tx_split_DT()
     OUT <- lapply(iGenes, function(iG){
-
         RES <- data.table::data.table(DTL1[[iG]][,colnames(DTL1[[iG]]) %in% storm_baseCols, with = FALSE])
         tmpSR <- c(utils::tail(DTL1[[iG]]$start_Ratio / DTL2[[iG]]$start_Ratio, -1), NA)
         sc_range <- (1+neighFlankSize):(nrow(DTL1[[iG]])-neighFlankSize)
@@ -953,22 +982,22 @@ scoreA <- function(CHR, d = 6, minMedEnv = 30){
 }
 
 # Adding score A to multiGene DT
-add_scoreA_3p <- function(DT, minMedEnv = 30, nCores = 1){
+add_scoreA_3p <- function(DT, minMedEnv = 30, nCores = 1, flankSize = 6){
     DTL <- txtools::tx_split_DT(DT)
     parallel::mclapply(mc.cores = nCores, DTL, function(x){
-        tmp <- scoreA(x$end_3p, minMedEnv = minMedEnv)
+        tmp <- scoreA(x$end_3p, minMedEnv = minMedEnv, d = flankSize)
         tibble::add_column(x, scoreA_3p = tmp)
     }) %>% txtools::tx_merge_DT()
 }
 
 # Adding score A 5p_ends to multiGene DT
-add_scoreA_5p <- function(DT, minMedEnv = 15, nCores = 1){
+add_scoreA_5p <- function(DT, minMedEnv = 15, nCores = 1, flankSize = 6){
     DTL <- txtools::tx_split_DT(DT)
     parallel::mclapply(mc.cores = nCores, DTL, function(x){
         if(!("startRate_1bpDS" %in% names(x))){
             x <- add_StartRate_1bpDS(x)
         }
-        tmp <- scoreA(x$start_5p, minMedEnv = minMedEnv)
+        tmp <- scoreA(x$start_5p, minMedEnv = minMedEnv, d = flankSize)
         tmp <- c(utils::tail(tmp, -1), NA)
         tibble::add_column(x, scoreA_5p = tmp)
     }) %>% txtools::tx_merge_DT()

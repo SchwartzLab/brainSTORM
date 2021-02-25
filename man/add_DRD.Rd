@@ -2,7 +2,7 @@
 % Please edit documentation in R/metrics.R
 \name{add_DRD}
 \alias{add_DRD}
-\title{Add deletion rate difference to STORM object}
+\title{Add deletion rate difference}
 \usage{
 add_DRD(
   STORM,
@@ -14,11 +14,24 @@ add_DRD(
 )
 }
 \arguments{
-\item{minReadCounts}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
+\item{group_A}{character. Name of group to be compared as found in STORM$META$group}
+
+\item{group_B}{character. Name of group to be compared as found in STORM$META$group}
+
+\item{newColName}{character. Name of calculated metric to be stored in STORM$RES,
+assigned by default based on group_A and group_B}
+
+\item{onNucs}{character. Nucleotide(s) in which the metric will be calculated}
+
+\item{minReadCounts}{integer. Minimal number of nucleotide reads (NOT coverage)
+in position for metric to be calculated}
 }
 \value{
 
 }
 \description{
-Add deletion rate difference to STORM object
+Calculated the deletion rate to nucleotide reads for each position and
+subtracts it for the rate in the control group.
 }

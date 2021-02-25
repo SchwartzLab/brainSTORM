@@ -9,18 +9,45 @@ add_2OmeScore(
   lib_LowdNTPs,
   lib_HighdNTPs,
   newColName = "auto",
-  neighFlankSize = 5,
+  flankSize = 5,
   perNuc_Zscaling = F,
   onNucs = c("A", "C", "G", "T"),
   minCov = 50
 )
 }
 \arguments{
-\item{minCov}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
+\item{lib_LowdNTPs}{character. Name of group with low-dNTPs library preparation
+found in STORM$META$group}
+
+\item{lib_HighdNTPs}{character. Name of group with high-dNTPs library preparation
+found in STORM$META$group}
+
+\item{newColName}{character. Name of calculated metric to be stored in STORM$RES,
+assigned by default based on group_A and group_B}
+
+\item{flankSize}{integer. Length of window to each side of position to
+consider for metric calculation}
+
+\item{onNucs}{character. Nucleotide(s) in which the metric will be calculated}
+
+\item{minCov}{integer. Minimal coverage in position for metric to be calculated}
 }
 \value{
 
 }
 \description{
-Add 2-O-methylation score to STORM-seq object
+Methylation score that considers the log2-FCH of start ratio between
+two RNA-seq libraries (low-dNTPs and high-dNTPs), subtracting the "noise"
+from a surrounding window.
+}
+\details{
+Incarnato et al. 2017: For Nm Incarnato and collabs. used the fold change
+as the log2 of the ratio between the stoppage ratio at the low dNTPs
+concentration and the stoppage ratio in the high dNTPs concentration sample.
+Because the stoppage ratio seems to be strongly region specific, they
+subtracted the local background defined as the mean ratio of the stoppage
+in the neighborhood of a given position (+/- 5 nucleotides, excluding
+given position).
 }

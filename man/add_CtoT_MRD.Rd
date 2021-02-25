@@ -2,7 +2,7 @@
 % Please edit documentation in R/metrics.R
 \name{add_CtoT_MRD}
 \alias{add_CtoT_MRD}
-\title{Add C->T misincorporation difference (CtoT_MRD) to STORM object}
+\title{Add C-to-T misincorporation difference}
 \usage{
 add_CtoT_MRD(
   STORM,
@@ -14,11 +14,29 @@ add_CtoT_MRD(
 )
 }
 \arguments{
-\item{onNucs}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
+\item{group_A}{character. Name of group to be compared as found in STORM$META$group}
+
+\item{group_B}{character. Name of group to be compared as found in STORM$META$group}
+
+\item{newColName}{character. Name of calculated metric to be stored in STORM$RES,
+assigned by default based on group_A and group_B}
+
+\item{onNucs}{character. Nucleotide(s) in which the metric will be calculated}
 }
 \value{
 
 }
 \description{
-Add C->T misincorporation difference (CtoT_MRD) to STORM object
+Calculates the difference of T conversion at C positions by subtracting the
+result of "T"/("T"+"C") between groups. Commonly NaCNBH3-Treated vs
+Control or vs Deacetylated negative control.
+}
+\details{
+The reaction of ac4C with sodium cyanoborohydride (NaCNBH3) under acidic
+conditions forms the reduced nucleobase N4-acetyltetrahydrocytidine.
+The altered structure of this reduced nucleobase compared with ac4C causes
+the incorporation of non-cognate deoxynucleotide triphosphates (dNTPs)
+upon reverse transcription (Sas-Chen et al. 2020).
 }

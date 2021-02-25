@@ -2,7 +2,7 @@
 % Please edit documentation in R/metrics.R
 \name{add_MR}
 \alias{add_MR}
-\title{Add Missincorporation rate}
+\title{Add Misincorporation Rate}
 \usage{
 add_MR(
   STORM,
@@ -13,11 +13,18 @@ add_MR(
 )
 }
 \arguments{
-\item{onNucs}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
+\item{group_A}{character. Name of group to be compared as found in STORM$META$group}
+
+\item{newColName}{character. Name of calculated metric to be stored in STORM$RES,
+assigned by default based on group_A and group_B}
+
+\item{onNucs}{character. Nucleotide(s) in which the metric will be calculated}
 }
 \value{
 
 }
 \description{
-Add Missincorporation rate
+Add Misincorporation Rate
 }

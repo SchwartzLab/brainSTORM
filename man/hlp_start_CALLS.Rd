@@ -7,6 +7,8 @@
 hlp_start_CALLS(STORM, RNAmods = RNAmods_vec)
 }
 \arguments{
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
 \item{RNAmods}{character Vector of RNA modification symbols to assign scores
 to. By default = brainSTORM::RNAmods_vec.}
 }

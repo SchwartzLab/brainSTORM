@@ -2,7 +2,7 @@
 % Please edit documentation in R/metrics.R
 \name{add_SR}
 \alias{add_SR}
-\title{Add read-start to coverage ratio}
+\title{Add Read-start to coverage ratio}
 \usage{
 add_SR(
   STORM,
@@ -13,11 +13,20 @@ add_SR(
 )
 }
 \arguments{
-\item{minCov}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
+\item{group_A}{character. Name of group to be compared as found in STORM$META$group}
+
+\item{newColName}{character. Name of calculated metric to be stored in STORM$RES,
+assigned by default based on group_A and group_B}
+
+\item{onNucs}{character. Nucleotide(s) in which the metric will be calculated}
+
+\item{minCov}{integer. Minimal coverage in position for metric to be calculated}
 }
 \value{
 
 }
 \description{
-Add read-start to coverage ratio
+Add Read-start to coverage ratio
 }

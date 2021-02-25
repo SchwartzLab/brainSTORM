@@ -3,22 +3,36 @@
 \name{add_scoreA3p}
 \alias{add_scoreA3p}
 \alias{storm_add_scoreA3p}
-\title{Add ScoreA-3prime to a STORM object}
+\title{Add ScoreA accounting for read-ends (3prime)}
 \usage{
 add_scoreA3p(
   STORM,
   group_A,
   newColName = "auto",
   onNucs = c("A", "C", "G", "T"),
-  minMedCov = 30
+  minMedCov = 30,
+  flankSize = 6
 )
 }
 \arguments{
-\item{minMedCov}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
+\item{group_A}{character. Name of group to be compared as found in STORM$META$group}
+
+\item{newColName}{character. Name of calculated metric to be stored in STORM$RES,
+assigned by default based on group_A and group_B}
+
+\item{onNucs}{character. Nucleotide(s) in which the metric will be calculated}
+
+\item{minMedCov}{integer. Minimal median coverage of window around position,
+delimited by flankSize}
+
+\item{flankSize}{integer. Length of window to each side of position to
+consider for metric calculation}
 }
 \value{
 
 }
 \description{
-Add ScoreA-3prime to a STORM object
+Add ScoreA accounting for read-ends (3prime)
 }

@@ -7,6 +7,8 @@
 hlp_assign_scores(STORM, RNAmod, scores)
 }
 \arguments{
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
+
 \item{scores}{}
 }
 \value{

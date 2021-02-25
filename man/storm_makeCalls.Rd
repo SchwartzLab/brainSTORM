@@ -2,16 +2,16 @@
 % Please edit documentation in R/metrics.R
 \name{storm_makeCalls}
 \alias{storm_makeCalls}
-\title{Assigning default Scores}
+\title{Assigning default Scores to tables by sets of samples}
 \usage{
 storm_makeCalls(STORM)
 }
 \arguments{
-\item{STORM}{}
+\item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}
 }
 \value{
 
 }
 \description{
-Assigning default Scores
+Assigning default Scores to tables by sets of samples
 }
