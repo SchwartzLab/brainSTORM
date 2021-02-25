@@ -35,7 +35,11 @@ library(parallel)
 library(gridExtra)
 ```
 
-This are the file paths needed to start the run
+These are the file paths needed to start the run:
+
+* fastaGenome: The genome fasta file from which the transcriptome will be 
+extracted.
+
 
 ```{r}
 # Genome and Gene Annotation
@@ -46,6 +50,24 @@ r1Files <- grep(list.files("/home/labs/schwartzlab/joeg/data/lib524/Saccharomyce
 OUTDIR <- "/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae"
 EXP_NAME <- "S.cerevisiae_SK1-lib524"
 NCORES <- 10
+```
+
+## Design matrix from R1 Fasta files.
+
+```{r}
+vList <- list(organism = c("PyroAbyss", "TherAcid", "Yeast", "Human"), 
+              RTase = c("SSIII", "SSIV", "TGIRT", "RTHIV"),
+              libTreat = c("Ac4C", "CMC", "DeacetylatedAc4C", "MocklowdNTPs",
+                           "Mock", "Dimroth", "m5C", "AlkBmix", "RBSseqHeatMg", "NaBH4HydBiotin"),
+              bioTreat = c("80deg", "95deg", "100deg", "AcidpH1", "AcidpH2", "AcidpH3"))
+
+META <- storm_META(fileNames = r1Files,
+                   varsList = vList,
+                   setVars = "organism",
+                   idVars = c("organism", "RTase", "libTreat"),
+                   groupVars = c("libTreat", "RTase"), 
+                   outDir = OUTDIR)
+META
 ```
 
 ## STAR genome and mapping reads
@@ -64,23 +86,6 @@ STARGenome <- mkSTARgenome(fastaTxOme, bedTxOme)
 STARGenome_bis <- mkSTARgenome(bisTxPath, bedTxOme)
 ```
 
-* Design matrix from R1 Fasta files.
-
-```{r}
-vList <- list(organism = c("PyroAbyss", "TherAcid", "Yeast", "Human"), 
-              RTase = c("SSIII", "SSIV", "TGIRT", "RTHIV"),
-              libTreat = c("Ac4C", "CMC", "DeacetylatedAc4C", "MocklowdNTPs",
-                           "Mock", "Dimroth", "m5C", "AlkBmix", "RBSseqHeatMg", "NaBH4HydBiotin"),
-              bioTreat = c("80deg", "95deg", "100deg", "AcidpH1", "AcidpH2", "AcidpH3"))
-
-META <- storm_META(fileNames = r1Files,
-                   varsList = vList,
-                   setVars = "organism",
-                   idVars = c("organism", "RTase", "libTreat"),
-                   groupVars = c("libTreat", "RTase"), 
-                   outDir = OUTDIR)
-META
-```
 
 * Read mapping to reference transcriptome using STAR
 
@@ -161,17 +166,31 @@ gridExtra::grid.arrange(ggReadStats[[1]], ggReadStats[[2]], ncol = 2)
 
 ```{r, eval = FALSE}
 STORM <- storm_STORM(META, GENOME, TXOME, NCORES) 
-
 # Save STORM object
 saveRDS(STORM, file = file.path(OUTDIR, "STORM_Sc_lib524.rds"))
 ```
 
 ## Metrics calculation and assignment to RNAmods
 
+The resulting STORM score contain 
 ```{r}
+rm(list = ls())
+load_all()
 STORM <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae/STORM_Sc_lib524.rds")
 STORM <- STORM %>% add_default_metrics_v2() %>% storm_makeCalls()
+
+rRNAmods_Sc <- readRDS("/home/labs/schwartzlab/miguelg/BIGDATA/RNAmod_Annot/Taoka/rib_mods_Sc.rds")
+STORM <- addKnownRNAmods(STORM, rRNAmods_Sc)
+
 ```
+
+## Plotting some scores
+
+```{r}
+ggMetricsNuc(STORM)
+ggMetricsNuc(STORM, Y_scores, "Yeast - PseudoU scores")
+```
+
 
 # Session Info
 
