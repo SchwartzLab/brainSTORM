@@ -3,7 +3,7 @@
 
 <!-- badges: start -->
 
-[![](https://img.shields.io/badge/devel%20version-0.0.2-blue.svg)](https://github.com/SchwartzLab/brainSTORM)
+[![](https://img.shields.io/badge/devel%20version-0.0.3-blue.svg)](https://github.com/SchwartzLab/brainSTORM)
 <!-- badges: end -->
 
 ## Description
