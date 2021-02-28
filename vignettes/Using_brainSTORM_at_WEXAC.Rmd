@@ -37,10 +37,6 @@ library(gridExtra)
 
 These are the file paths needed to start the run:
 
-* fastaGenome: The genome fasta file from which the transcriptome will be 
-extracted.
-
-
 ```{r}
 # Genome and Gene Annotation
 fastaGenome <- "/home/labs/schwartzlab/miguelg/BIGDATA/genome_references/ribosomal/Sc_ribosomal_seqs.fa"
@@ -76,20 +72,27 @@ META
     + This is done so that bisulphite conversion is done accordingly to strand orientation.
 * STAR Genomes generation
 
-```{r, eval = FALSE}
+```{r}
+# Make transcriptome, make new gene annotation for transcriptome
 fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = NCORES)
 bedTxOme <- mkBedFromFastaTxOme(fastaTxOme)
 
-# 
+# Creating bisulphite transcriptome
 bisTxPath <- bisGenome(fastaTxOme)
+
+# Create STAR genomes
 STARGenome <- mkSTARgenome(fastaTxOme, bedTxOme)
 STARGenome_bis <- mkSTARgenome(bisTxPath, bedTxOme)
+
+#Loading transcriptome and annotation
+GENOME <- txtools::tx_load_genome(fastaTxOme)
+TXOME <- txtools::tx_load_bed(bedTxOme)
 ```
 
 
 * Read mapping to reference transcriptome using STAR
 
-```{r, eval = FALSE}
+```{r}
 if(!all(file.exists(META$BAM))){
     # STAR Alignment
     alignSTAR(read1Files = META[libTreat != "m5C" & libTreat != "RBSseqHeatMg", FASTQ], 
@@ -113,10 +116,7 @@ if(!all(file.exists(META$BAM))){
 
 * Process all BAM into TxDT
 
-```{r, eval = FALSE}
-GENOME <- txtools::tx_load_genome(fastaTxOme)
-TXOME <- txtools::tx_load_bed(bedTxOme)
-
+```{r}
 if(!all(file.exists(META$RDS))){
     rdsFiles <- parallel::mclapply(mc.cores = NCORES, seq_along(META$FASTQ), function(i){
         bam2TxDT(BAMfile = META$BAM[i], 
@@ -142,7 +142,7 @@ ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt"), species
 plot(ggLCE)
 ```
 
-* Nucleotide frequency
+* Nucleotide frequency report
 
 ```{r}
 nucF <- fastq_nucFreq(META, NCORES, firstN =  1e5)
@@ -158,33 +158,27 @@ ggReadStats <- gg_readStats(rReport, EXP_NAME)
 gridExtra::grid.arrange(ggReadStats[[1]], ggReadStats[[2]], ncol = 2)
 ```
 
-## STORMbrain
+## brainSTORM
 
 * STORM object creation
-* Metric calculations (for TGIRT and SSIII)
-* Logistic model fit
+* Metrics calculation 
+* Assignment to RNAmods tables
 
-```{r, eval = FALSE}
-STORM <- storm_STORM(META, GENOME, TXOME, NCORES) 
+```{r}
+# STORM object creation %>% Metrics calculation %>% assignment ro RNAmods tables
+STORM <- storm_STORM(META, GENOME, TXOME, nCores = 1) %>% 
+    add_default_metrics_v2() %>% 
+    storm_makeCalls()
+# Add known RNAmods
+rRNAmods_Sc <- readRDS("/home/labs/schwartzlab/miguelg/BIGDATA/RNAmod_Annot/Taoka/rib_mods_Sc.rds")
+STORM <- addKnownRNAmods(STORM, rRNAmods_Sc)
 # Save STORM object
 saveRDS(STORM, file = file.path(OUTDIR, "STORM_Sc_lib524.rds"))
 ```
 
-## Metrics calculation and assignment to RNAmods
+## Plotting scores by RNA modification
 
-The resulting STORM score contain 
-```{r}
-STORM <- readRDS("/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae/STORM_Sc_lib524.rds")
-STORM <- STORM %>% add_default_metrics_v2() %>% storm_makeCalls()
-
-rRNAmods_Sc <- readRDS("/home/labs/schwartzlab/miguelg/BIGDATA/RNAmod_Annot/Taoka/rib_mods_Sc.rds")
-STORM <- addKnownRNAmods(STORM, rRNAmods_Sc)
-
-```
-
-## Plotting some scores
-
-```{r}
+```{r, fig.width= 12, fig.height=8, fig.align="center"}
 storm_metricsBoxPlot_byNuc(STORM, Y_scores, "Yeast - PseudoU scores")
 storm_metricsBoxPlot_byNuc(STORM, Nm_scores, "Yeast - 2Ometh scores")
 storm_metricsBoxPlot_byNuc(STORM, ac4C_scores, "Yeast - ac4C scores")
