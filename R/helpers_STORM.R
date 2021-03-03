@@ -134,8 +134,9 @@ libComplexReport <- function(META, maxExtrapolation = 2.01e6, steps = 1e5, verbo
             com <- paste0("module load libgsl/2.3 && ",
                           "module load preseq/2.0.1 && ",
                           "/apps/RH7U2/gnu/preseq/2.0.1/preseq lc_extrap -P -B ",
-                          "-e ", maxExtrapolation, " -s ", steps, " ", file, " -o ",
-                          gsub(pattern = ".bam$", replacement = ".lce.txt", x = file),
+                          "-e -l 589824 ", maxExtrapolation, " -s ", steps, " ",
+                          file, " -o ", gsub(pattern = ".bam$",
+                                             replacement = ".lce.txt", x = file),
                           " &")
             system(com)
         }
