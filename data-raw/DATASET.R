@@ -57,3 +57,77 @@ usethis::use_data(m1A_scores, overwrite = TRUE)
 usethis::use_data(m7G_scores, overwrite = TRUE)
 usethis::use_data(m5C_scores, overwrite = TRUE)
 usethis::use_data(m3U_scores, overwrite = TRUE)
+
+# Make sample STORM object. ####################################################
+
+# Genome and Gene Annotation
+fastaGenome <- "/home/labs/schwartzlab/miguelg/BIGDATA/genome_references/ribosomal/Sc_ribosomal_seqs.fa"
+bedAnnotation <- "/home/labs/schwartzlab/miguelg/BIGDATA/gene_annotations/ribosomal/Sc_ribosomal_seqs.bed"
+r1Files <- grep(list.files("/home/labs/schwartzlab/joeg/data/lib524/Saccharomyces_cerevisiae_SK1",
+                           full.names = TRUE), pattern = "R1", value = TRUE)
+OUTDIR <- "/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae"
+EXP_NAME <- "S.cerevisiae_SK1-lib524"
+NCORES <- 10
+
+vList <- list(organism = c("PyroAbyss", "TherAcid", "Yeast", "Human"),
+              RTase = c("SSIII", "SSIV", "TGIRT", "RTHIV"),
+              libTreat = c("Ac4C", "CMC", "DeacetylatedAc4C", "MocklowdNTPs",
+                           "Mock", "Dimroth", "m5C", "AlkBmix", "RBSseqHeatMg", "NaBH4HydBiotin"),
+              bioTreat = c("80deg", "95deg", "100deg", "AcidpH1", "AcidpH2", "AcidpH3"))
+
+META <- storm_META(fileNames = r1Files,
+                   varsList = vList,
+                   setVars = "organism",
+                   idVars = c("organism", "RTase", "libTreat"),
+                   groupVars = c("libTreat", "RTase"),
+                   outDir = OUTDIR)
+
+# Make transcriptome, make new gene annotation for transcriptome
+fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = NCORES)
+bedTxOme <- mkBedFromFastaTxOme(fastaTxOme)
+
+# Creating bisulphite transcriptome
+bisTxPath <- bisGenome(fastaTxOme)
+
+# Create STAR genomes
+STARGenome <- mkSTARgenome(fastaTxOme, bedTxOme)
+STARGenome_bis <- mkSTARgenome(bisTxPath, bedTxOme)
+
+#Loading transcriptome and annotation
+GENOME <- txtools::tx_load_genome(fastaTxOme)
+TXOME <- txtools::tx_load_bed(bedTxOme)
+
+if(!all(file.exists(META$BAM))){
+    # STAR Alignment
+    alignSTAR(read1Files = META[libTreat != "m5C" & libTreat != "RBSseqHeatMg", FASTQ],
+              nCores = NCORES,
+              zipped = TRUE,
+              STARgenomeDir = STARGenome,
+              alignEndsType = "Local",
+              outSAMtype = "BAM Unsorted",
+              outDir = OUTDIR)
+    alignSTAR(read1Files = META[libTreat == "m5C" | libTreat == "RBSseqHeatMg", FASTQ],
+              nCores = NCORES,
+              zipped = TRUE,
+              STARgenomeDir = STARGenome_bis,
+              alignEndsType = "Local",
+              outSAMtype = "BAM Unsorted",
+              outDir = OUTDIR)
+}
+
+if(!all(file.exists(META$RDS))){
+    rdsFiles <- parallel::mclapply(mc.cores = NCORES, seq_along(META$FASTQ), function(i){
+        bam2TxDT(BAMfile = META$BAM[i],
+                 geneAnnot = TXOME,
+                 genome = GENOME,
+                 dtType = "covNuc",
+                 outDir = OUTDIR,
+                 nCores = 1,
+                 remL = 1000,
+                 minR = 0)
+    })
+}
+
+yeast_STORM <- storm_STORM(META, GENOME, TXOME, nCores = 1)
+
+usethis::use_data(yeast_STORM, overwrite = TRUE)

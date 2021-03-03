@@ -18,8 +18,7 @@ knitr::opts_chunk$set(
 
 
 ```{r, Global Options, echo = F}
-knitr::opts_chunk$set(warning = F, message = F, fig.pos = "center", fig.width = 10)
-tStart <- Sys.time()
+knitr::opts_chunk$set(warning = F, message = F, fig.pos = "center", fig.width = 10, fig.height = 8)
 ```
 
 ## SETUP
@@ -63,7 +62,6 @@ META <- storm_META(fileNames = r1Files,
                    idVars = c("organism", "RTase", "libTreat"),
                    groupVars = c("libTreat", "RTase"), 
                    outDir = OUTDIR)
-META
 ```
 
 ## STAR genome and mapping reads
@@ -72,7 +70,7 @@ META
     + This is done so that bisulphite conversion is done accordingly to strand orientation.
 * STAR Genomes generation
 
-```{r}
+```{r, eval = FALSE}
 # Make transcriptome, make new gene annotation for transcriptome
 fastaTxOme <- mkTranscriptome(fastaGenome, bedAnnotation, nCores = NCORES)
 bedTxOme <- mkBedFromFastaTxOme(fastaTxOme)
@@ -92,7 +90,7 @@ TXOME <- txtools::tx_load_bed(bedTxOme)
 
 * Read mapping to reference transcriptome using STAR
 
-```{r}
+```{r, STAR mapping reads, eval = FALSE}
 if(!all(file.exists(META$BAM))){
     # STAR Alignment
     alignSTAR(read1Files = META[libTreat != "m5C" & libTreat != "RBSseqHeatMg", FASTQ], 
@@ -116,7 +114,7 @@ if(!all(file.exists(META$BAM))){
 
 * Process all BAM into TxDT
 
-```{r}
+```{r, bam2txDT, eval = FALSE}
 if(!all(file.exists(META$RDS))){
     rdsFiles <- parallel::mclapply(mc.cores = NCORES, seq_along(META$FASTQ), function(i){
         bam2TxDT(BAMfile = META$BAM[i], 
@@ -133,11 +131,12 @@ if(!all(file.exists(META$RDS))){
 
 ## Reports
 
-* Alignment report
+* Library complexity report
 
-```{r}
-# Lib Complexity 
+```{r, eval = FALSE}
 libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
+```
+```{r}
 ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt"), speciesName = EXP_NAME)
 plot(ggLCE)
 ```
@@ -145,8 +144,8 @@ plot(ggLCE)
 * Nucleotide frequency report
 
 ```{r}
-nucF <- fastq_nucFreq(META, NCORES, firstN =  1e5)
-ggNucF <- gg_nucFreq(nucF, EXP_NAME)
+ggNucF <- fastq_nucFreq(META, NCORES, firstN =  1e5) %>% 
+    gg_nucFreq(subtitle = EXP_NAME)
 plot(ggNucF)
 ```
 
@@ -164,16 +163,17 @@ gridExtra::grid.arrange(ggReadStats[[1]], ggReadStats[[2]], ncol = 2)
 * Metrics calculation 
 * Assignment to RNAmods tables
 
+> Here the object `yeast_STORM` is an in-built dataset to work as an example,
+which was created using the above code.
+
 ```{r}
-# STORM object creation %>% Metrics calculation %>% assignment ro RNAmods tables
-STORM <- storm_STORM(META, GENOME, TXOME, nCores = 1) %>% 
+# STORM <- storm_STORM(META, GENOME, TXOME, nCores = 1) 
+STORM <- yeast_STORM %>% 
     add_default_metrics_v2() %>% 
     storm_makeCalls()
-# Add known RNAmods
+# Add known RNA modification sites
 rRNAmods_Sc <- readRDS("/home/labs/schwartzlab/miguelg/BIGDATA/RNAmod_Annot/Taoka/rib_mods_Sc.rds")
 STORM <- addKnownRNAmods(STORM, rRNAmods_Sc)
-# Save STORM object
-saveRDS(STORM, file = file.path(OUTDIR, "STORM_Sc_lib524.rds"))
 ```
 
 ## Plotting scores by RNA modification
@@ -191,8 +191,5 @@ storm_metricsBoxPlot_byNuc(STORM, m3U_scores, "Yeast - m3U scores")
 # Session Info
 
 ```{r, Session Info, echo = FALSE}
-tEnd <- Sys.time()
 sessionInfo()
-tDif <- tEnd - tStart
-cat("Time to knit notebook:", round(tDif, 2), units(tDif))
 ```

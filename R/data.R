@@ -64,3 +64,11 @@
 #' @format character
 #'
 "m3U_scores"
+
+#' Yeast STORM object
+#'
+#' Example STORM object derived from STORMseq data of yeast.
+#'
+#' @format list
+#'
+"yeast_STORM"
