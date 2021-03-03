@@ -389,7 +389,10 @@ add_2OmeScore <- function(STORM,
     }
     sets <- intersect(STORM$META[STORM$META$group == lib_LowdNTPs,]$set,
                       STORM$META[STORM$META$group == lib_HighdNTPs,]$set)
-    if(length(sets) == 0){stop("No sets found with both lib_LowdNTPs and lib_HighdNTPs label")}
+    if(length(sets) == 0){warning("No sets found with both ", lib_LowdNTPs,
+                                  " and ", lib_HighdNTPs, " group labels.\n",
+                                  newColName, " was not calculated.")
+        return(STORM)}
     OUT <- lapply(sets, function(iSet){
         id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == lib_LowdNTPs,]$id
         id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == lib_HighdNTPs,]$id
@@ -785,7 +788,11 @@ add_scoreA3p <- function(STORM, group_A, newColName = "auto",
         newColName <- paste("ScoreA3p", group_A, sep = "_")
     }
     sets <- STORM$META[STORM$META$group == group_A,]$set
-    if(length(sets) == 0){stop("No sets found with group_A label")}
+    if(length(sets) == 0){
+        warning("No sets found with ", group_A, " group label.\n",
+                newColName, " was not calculated.")
+        return(STORM)
+    }
     OUT <- lapply(sets, function(iSet){
         id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
         DT_A <- add_scoreA_3p(STORM$DATA[[id_A]], minMedEnv = minMedCov, flankSize = flankSize)
