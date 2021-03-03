@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 
 ```{r, Global Options, echo = F}
-knitr::opts_chunk$set(warning = F, message = F)
+knitr::opts_chunk$set(warning = F, message = F, fig.pos = "center", fig.width = 10)
 tStart <- Sys.time()
 ```
 
@@ -137,7 +137,7 @@ if(!all(file.exists(META$RDS))){
 
 ```{r}
 # Lib Complexity 
-# libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
+libComplexReport(META, maxExtrapolation = 2.01e6, steps = 1e5, verbose = T)
 ggLCE <- gg_lce(META, tab_name = file.path(OUTDIR, "libCompReport.txt"), speciesName = EXP_NAME)
 plot(ggLCE)
 ```
