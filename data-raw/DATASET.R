@@ -69,11 +69,10 @@ OUTDIR <- "/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cer
 EXP_NAME <- "S.cerevisiae_SK1-lib524"
 NCORES <- 10
 
-vList <- list(organism = c("PyroAbyss", "TherAcid", "Yeast", "Human"),
+vList <- list(organism = c("Yeast"),
               RTase = c("SSIII", "SSIV", "TGIRT", "RTHIV"),
               libTreat = c("Ac4C", "CMC", "DeacetylatedAc4C", "MocklowdNTPs",
-                           "Mock", "Dimroth", "m5C", "AlkBmix", "RBSseqHeatMg", "NaBH4HydBiotin"),
-              bioTreat = c("80deg", "95deg", "100deg", "AcidpH1", "AcidpH2", "AcidpH3"))
+                           "Mock", "Dimroth", "m5C", "AlkBmix", "RBSseqHeatMg", "NaBH4HydBiotin"))
 
 META <- storm_META(fileNames = r1Files,
                    varsList = vList,
