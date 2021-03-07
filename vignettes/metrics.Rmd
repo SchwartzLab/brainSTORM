@@ -1,0 +1,57 @@
+---
+title: "metrics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{metrics}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(brainSTORM)
+```
+
+brainSTORM is designed to analyze STORM-seq data. In a nutshell STORM-seq is a
+multiplexed RNA-seq experiment in which each biological sample of RNA is 
+treated with several chemicals and different reverse transcriptases
+(RTs) to generate the cDNA which will be ultimately sequenced. In doing so
+the RNA-seq reads obtained reflect the nature of the nucleotides in the original
+RNA from samples.
+
+Many metrics used by brainSTORM are generic and are used to detect different 
+RNA modifications, while others are specific to a certain RNA modification.
+
+Here is an example 
+
+```{r}
+# yeast_STORM
+```
+
+
+add_DRD
+add_MRD
+add_SRD
+add_SRlog2FCh1bpDS
+add_SRD1bpDS
+
+add_CtoT_MRD
+add_CytPer
+add_2OmeScore
+add_scoreA3p
+
+
+
+
+
+
+
+
