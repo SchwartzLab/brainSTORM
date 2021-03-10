@@ -9,7 +9,6 @@ usethis::use_data(storm_baseCoorCols, overwrite = TRUE)
 usethis::use_data(RNAmods_vec, overwrite = TRUE)
 
 # Metrics to be assigned to specific RNAmods
-
 Y_scores <- c("SRD1bpDS_CMC.TGIRT_Mock.TGIRT",
               "SRD1bpDS_CMC.SSIII_Mock.SSIII",
               "SRlog2FCh1bpDS_CMC.TGIRT_Mock.TGIRT",

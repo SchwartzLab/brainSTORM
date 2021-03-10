@@ -624,7 +624,7 @@ add_DRD <- function(STORM, group_A, group_B, newColName = "auto",
 add_MR <- function(STORM, group_A, newColName = "auto",
                    onNucs = c("A", "C", "G", "T"), minCov = 50){
     if(newColName == "auto"){
-        newColName <- paste("MissIncRate", group_A, sep = "_")
+        newColName <- paste("MR", group_A, sep = "_")
     }
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){
@@ -663,7 +663,7 @@ add_MR <- function(STORM, group_A, newColName = "auto",
 add_SR <- function(STORM, group_A, newColName = "auto",
                    onNucs = c("A", "C", "G", "T"), minCov = 50){
     if(newColName == "auto"){
-        newColName <- paste("StartRate", group_A, sep = "_")
+        newColName <- paste("SR", group_A, sep = "_")
     }
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){
@@ -699,10 +699,10 @@ add_SR <- function(STORM, group_A, newColName = "auto",
 #' @export
 #'
 #' @examples
-add_SR_1bpDS <- function(STORM, group_A, newColName = "auto",
+add_SR1bpDS <- function(STORM, group_A, newColName = "auto",
                          onNucs = c("A", "C", "G", "T"), minCov = 50){
     if(newColName == "auto"){
-        newColName <- paste("StartRate1bpDS", group_A, sep = "_")
+        newColName <- paste("SR1bpDS", group_A, sep = "_")
     }
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){
@@ -741,7 +741,7 @@ add_SR_1bpDS <- function(STORM, group_A, newColName = "auto",
 add_ER <- function(STORM, group_A, newColName = "auto",
                    onNucs = c("A", "C", "G", "T"), minCov = 50){
     if(newColName == "auto"){
-        newColName <- paste("EndRate", group_A, sep = "_")
+        newColName <- paste("ER", group_A, sep = "_")
     }
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){
@@ -872,7 +872,7 @@ add_scoreA5p <- function(STORM, group_A, newColName = "auto",
 add_DR <- function(STORM, group_A, newColName = "auto",
                    onNucs = c("A", "C", "G", "T"), minReadCounts = 30){
     if(newColName == "auto"){
-        newColName <- paste("EndRate", group_A, sep = "_")
+        newColName <- paste("DR", group_A, sep = "_")
     }
     sets <- STORM$META[STORM$META$group == group_A,]$set
     if(length(sets) == 0){
