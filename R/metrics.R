@@ -29,8 +29,8 @@ add_default_metrics_v2 <- function(STORM){
         add_scoreA3p("Mock.RTHIV") %>%
         add_scoreA3p("Mock.SSIII") %>%
         add_scoreA3p("Mock.TGIRT") %>%
-        add_SRD("NaBH4HydBiotin.RTHIV", "Mock.RTHIV") %>%
-        add_SRD("NaBH4HydBiotin.TGIRT", "Mock.TGIRT") %>%
+        add_MRD("NaBH4HydBiotin.RTHIV", "Mock.RTHIV") %>%
+        add_MRD("NaBH4HydBiotin.TGIRT", "Mock.TGIRT") %>%
         add_SRD1bpDS("CMC.SSIII", "Mock.SSIII") %>%
         add_SRD1bpDS("CMC.TGIRT", "Mock.TGIRT") %>%
         add_SRD1bpDS("DeacetylatedAc4C.SSIII", "Ac4C.SSIII") %>%
@@ -123,8 +123,8 @@ add_m7G_metrics <- function(STORM){
         add_SRD1bpDS("DeacetylatedAc4C.SSIII", "Ac4C.SSIII") %>%
         add_MRD("DeacetylatedAc4C.TGIRT", "Ac4C.TGIRT") %>%
         add_MRD("DeacetylatedAc4C.SSIII", "Ac4C.SSIII") %>%
-        add_SRD("NaBH4HydBiotin.TGIRT", "Mock.TGIRT") %>%
-        add_SRD("NaBH4HydBiotin.RTHIV", "Mock.RTHIV")
+        add_MRD("NaBH4HydBiotin.TGIRT", "Mock.TGIRT") %>%
+        add_MRD("NaBH4HydBiotin.RTHIV", "Mock.RTHIV")
 }
 
 add_m5C_metrics <- function(STORM){

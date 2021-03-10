@@ -41,8 +41,8 @@ m7G_scores <- c("MRD_DeacetylatedAc4C.TGIRT_Ac4C.TGIRT",
                 "SRD1bpDS_DeacetylatedAc4C.SSIII_Ac4C.SSIII",
                 "SRlog2FCh1bpDS_DeacetylatedAc4C.SSIII_Ac4C.SSIII",
                 "SRlog2FCh1bpDS_DeacetylatedAc4C.TGIRT_Ac4C.TGIRT",
-                "SRD_NaBH4HydBiotin.RTHIV_Mock.RTHIV",
-                "SRD_NaBH4HydBiotin.TGIRT_Mock.TGIRT")
+                "MRD_NaBH4HydBiotin.RTHIV_Mock.RTHIV",
+                "MRD_NaBH4HydBiotin.TGIRT_Mock.TGIRT")
 
 m5C_scores <- c("CytPer_m5C.TGIRT_Mock.TGIRT",
                 "CytPer_RBSseqHeatMg.SSIII_Mock.SSIII",
