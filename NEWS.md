@@ -1,5 +1,9 @@
 # Updates during development
 
+## v0.0.4
+
+* Fixed m7G metrics SRD "NaBH4HydBiotin" vs "Mock", should be MRD.
+
 ## v0.0.3
 
 * Added missing Bioc dependencies
