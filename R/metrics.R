@@ -603,7 +603,7 @@ add_DRD <- function(STORM, group_A, group_B, newColName = "auto",
         tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
         return(tmpRES)
     }) %>% do.call(what = rbind)
-    STORM$RES <- brainSTORM:::hlpr_add_REScols(STORM$RES, OUT)
+    STORM$RES <- hlpr_add_REScols(STORM$RES, OUT)
     return(STORM)
 }
 

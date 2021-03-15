@@ -12,12 +12,17 @@ alignSTAR(
   nCores = 4,
   alignEndsType = "Local",
   outSAMtype = "BAM Unsorted",
+  alignIntronMax = 0,
   outFilterMultimapNmax = 10,
   outDir
 )
 }
 \arguments{
-\item{outDir}{}
+\item{read1Files}{character. Path to R1 FASTQ files}
+
+\item{STARgenomeDir}{character. Path to STAR genome to map to}
+
+\item{alignIntronMax}{}
 }
 \value{
 

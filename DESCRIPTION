@@ -41,7 +41,8 @@ Imports:
     tidyr,
     GenomicAlignments,
     plyranges,
-    seqinr
+    seqinr,
+    dplyr
 Depends: 
     R (>= 2.10)
 Suggests: 

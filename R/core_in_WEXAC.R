@@ -3,8 +3,8 @@
 #' Wrapper to perform alignment of sequencing reads to a reference genome
 #' using STAR (Dobin) and sorting with Samtools.
 #'
-#' @param read1Files
-#' @param STARgenomeDir
+#' @param read1Files character. Path to R1 FASTQ files
+#' @param STARgenomeDir character. Path to STAR genome to map to
 #' @param pairedEnd
 #' @param zipped
 #' @param nCores
@@ -12,6 +12,7 @@
 #' @param outSAMtype
 #' @param outFilterMultimapNmax
 #' @param outDir
+#' @param alignIntronMax
 #'
 #' @return
 #' @export
@@ -19,7 +20,7 @@
 #' @examples
 alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE,
                       nCores = 4, alignEndsType = "Local",
-                      outSAMtype = "BAM Unsorted", alignIntronMax = 1, outFilterMultimapNmax = 10,
+                      outSAMtype = "BAM Unsorted", alignIntronMax = 0, outFilterMultimapNmax = 10,
                       outDir){
     mkTmpDir()
     if(!dir.exists(outDir)){dir.create(outDir)}
