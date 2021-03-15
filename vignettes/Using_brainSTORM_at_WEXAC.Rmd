@@ -98,14 +98,16 @@ if(!all(file.exists(META$BAM))){
               zipped = TRUE,
               STARgenomeDir = STARGenome, 
               alignEndsType = "Local", 
-              outSAMtype = "BAM Unsorted", 
+              outSAMtype = "BAM Unsorted",
+              alignIntronMax = 1, #set to 1 for bacteria/archaea, adjust accordingly for eukaryotes!
               outDir = OUTDIR)
     alignSTAR(read1Files = META[libTreat == "m5C" | libTreat == "RBSseqHeatMg", FASTQ], 
               nCores = NCORES, 
               zipped = TRUE,
               STARgenomeDir = STARGenome_bis, 
               alignEndsType = "Local", 
-              outSAMtype = "BAM Unsorted", 
+              outSAMtype = "BAM Unsorted",
+              alignIntronMax = 1, #set to 1 for bacteria/archaea, adjust accordingly for eukaryotes!
               outDir = OUTDIR)
 }
 ```
