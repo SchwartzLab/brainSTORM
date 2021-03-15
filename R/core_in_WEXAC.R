@@ -19,7 +19,7 @@
 #' @examples
 alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE,
                       nCores = 4, alignEndsType = "Local",
-                      outSAMtype = "BAM Unsorted", outFilterMultimapNmax = 10,
+                      outSAMtype = "BAM Unsorted", alignIntronMax = 1, outFilterMultimapNmax = 10,
                       outDir){
     mkTmpDir()
     if(!dir.exists(outDir)){dir.create(outDir)}
