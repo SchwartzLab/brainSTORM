@@ -45,7 +45,8 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
                       " --outFileNamePrefix ", outFPrefix,
                       " --outSAMtype ", outSAMtype,
                       " --outFilterMultimapNmax ", outFilterMultimapNmax,
-                      " --alignEndsType ", alignEndsType)
+                      " --alignEndsType ", alignEndsType,
+                      " --alignIntronMax", alignIntronMax)
         system(com)
     }
     # Alignment Summary Report
