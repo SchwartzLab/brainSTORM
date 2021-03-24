@@ -44,7 +44,7 @@ r1Files <- grep(list.files("/home/labs/schwartzlab/joeg/data/lib524/Saccharomyce
                            full.names = TRUE), pattern = "R1", value = TRUE)
 OUTDIR <- "/home/labs/schwartzlab/miguelg/WORKSPACE_wexac/storm_seq/lib524/s_cerevisiae"
 EXP_NAME <- "S.cerevisiae_SK1-lib524"
-NCORES <- 10
+NCORES <- 1
 ```
 
 ## Design matrix from R1 Fasta files.

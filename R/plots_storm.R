@@ -35,16 +35,18 @@ storm_metricsBoxPlot_byNuc <- function(STORM, metrics = NULL, title = ""){
 #' @export
 #'
 #' @examples
-storm_metricsScatterPlot_byPos <- function(STORM, metrics = NULL, title = ""){
-    if(!is.null(scores)){
-        tmpDT <- dplyr::filter(STORM$RES, metric %in% scores) %>% stats::na.omit()
+storm_metricsScatterPlot_byPos <- function(STORM, metrics = NULL, title = "", na.rm = FALSE){
+    if(!is.null(metrics)){
+        tmpDT <- dplyr::filter(STORM$RES, metric %in% metrics)
     }else{
-        tmpDT <- STORM$RES %>% stats::na.omit()
+        tmpDT <- STORM$RES
     }
+    if(na.rm){tmpDT <- stats::na.omit(tmpDT)}
     ggplot2::ggplot(tmpDT) +
-        ggplot2::geom_point(ggplot2::aes(x = tmpDT$pos, y = tmpDT$score, colour = tmpDT$gene), alpha = 0.2) +
-        ggplot2::facet_grid(tmpDT$metric~tmpDT$set, scales = "free") +
+        ggplot2::geom_point(ggplot2::aes(x = .data$pos, y = .data$score, colour = .data$gene), alpha = 0.2) +
+        ggplot2::facet_grid(.data$set ~ .data$metric, scales = "free") +
         ggplot2::theme_bw() +
         ggplot2::theme(axis.text.x = ggplot2::element_blank()) +
-        ggplot2::ggtitle(title) + ggplot2::xlab("txCoor")
+        ggplot2::ggtitle(title) + ggplot2::xlab("txCoor") +
+        ggplot2::theme_minimal()
 }

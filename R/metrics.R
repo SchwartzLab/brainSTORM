@@ -956,8 +956,8 @@ detect_2OmeScore <- function(DT_low, DT_high, neighFlankSize = 5, minCov = 50){
     DTL2 <- DT_high %>% txtools::tx_split_DT()
     OUT <- lapply(iGenes, function(iG){
         RES <- data.table::data.table(DTL1[[iG]][,colnames(DTL1[[iG]]) %in% storm_baseCols, with = FALSE])
-        tmpSR <- c(utils::tail(DTL1[[iG]]$start_Ratio / DTL2[[iG]]$start_Ratio, -1), NA)
-        sc_range <- (1+neighFlankSize):(nrow(DTL1[[iG]])-neighFlankSize)
+        tmpSR <- c(utils::tail(DTL1[[iG]]$start_Ratio / DTL2[[iG]]$start_Ratio, - 1), NA)
+        sc_range <- (1 + neighFlankSize):(nrow(DTL1[[iG]])-neighFlankSize)
         score <- rep(NA, nrow(DTL1[[iG]]))
         for(i in sc_range){
             score[i] <- log2(tmpSR[i]) - log2(mean(c(tmpSR[(i - neighFlankSize):(i - 1)],

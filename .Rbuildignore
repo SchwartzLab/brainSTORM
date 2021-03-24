@@ -5,3 +5,4 @@
 ^fast$
 ^STORMtmp_dir$
 ^data-raw$
+^README\.Rmd$

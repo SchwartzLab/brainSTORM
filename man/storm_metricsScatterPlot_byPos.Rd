@@ -4,7 +4,12 @@
 \alias{storm_metricsScatterPlot_byPos}
 \title{STORM scatterplot of scores by txcoor}
 \usage{
-storm_metricsScatterPlot_byPos(STORM, metrics = NULL, title = "")
+storm_metricsScatterPlot_byPos(
+  STORM,
+  metrics = NULL,
+  title = "",
+  na.rm = FALSE
+)
 }
 \arguments{
 \item{STORM}{list. STORM object as output by \code{\link{storm_STORM}}}

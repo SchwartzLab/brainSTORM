@@ -3,7 +3,7 @@
 
 <!-- badges: start -->
 
-[![](https://img.shields.io/badge/devel%20version-0.0.3-blue.svg)](https://github.com/SchwartzLab/brainSTORM)
+[![](https://img.shields.io/badge/devel%20version-0.0.4-blue.svg)](https://github.com/SchwartzLab/brainSTORM)
 <!-- badges: end -->
 
 ## Description
@@ -23,7 +23,7 @@ following commands in the R console:
 ``` r
 if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
-remotes::install_github("SchwartzLab/brainSTORM")
+remotes::install_github("SchwartzLab/brainSTORM", build_vignettes = TRUE)
 ```
 
 ## Further documentation
