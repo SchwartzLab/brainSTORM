@@ -27,7 +27,7 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
     if(zipped){rFCom <- "zcat"}else if(!zipped){rFCom <- "cat"}
     for(read1F in read1Files){
         if(pairedEnd){
-            read2F <- gsub(read1F, pattern = "R1", replacement = "R2")
+            read2F <- gsub(read1F, pattern = "_R1", replacement = "_R2")
             if(!file.exists(read2F)){stop(read2F, "does not exist.")}
         }else if(!pairedEnd){
             read2F <- ""
