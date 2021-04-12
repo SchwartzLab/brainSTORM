@@ -213,6 +213,95 @@ storm_makeCalls <- function(STORM){
 
 # Between two groups ###########################################################
 
+#' Add End ratio log2-Fold-Change 1bp downstream
+#'
+#' Calculates the log2-Fold-Change of the end rate ratio 1bp downstream
+#' of group_A over that of group_B per set of samples in a STORM object.
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
+#'
+#' @return
+#' @export
+#'
+add_ERlog2FCh1bpDS=function(STORM, group_A, group_B, newColName = "auto",
+                       onNucs = c("A", "C", "G", "T"), minCov = 50){
+  if(newColName == "auto"){
+    newColName <- paste("ERlog2FCh1bpDS", group_A, group_B, sep = "_")
+  }
+  sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
+  if(length(sets) == 0){
+    warning("No sets found with both ", group_A, " and ", group_B, " group labels.\n",
+            newColName, " was not calculated.")
+    return(STORM)
+  }
+  OUT <- lapply(sets, function(iSet){
+    id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+    id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
+    DT_A <- add_EndRate1bpDS(STORM$DATA[[id_A]], minCov = minCov)
+    DT_B <- add_EndRate1bpDS(STORM$DATA[[id_B]], minCov = minCov)
+    tmpRES <- data.table::data.table(log2(DT_A$endRate_1bpDS / DT_B$endRate_1bpDS))
+    tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
+    names(tmpRES) <- c("set", "metric", "score")
+    tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+                                             "txcoor", "pos", "refSeq")], tmpRES)
+    tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
+    return(tmpRES)
+  }) %>% do.call(what = rbind)
+  STORM$RES <- hlpr_add_REScols(STORM$RES, OUT)
+  return(STORM)
+}
+
+#' Add End ratio log2-Fold-Change
+#'
+#' Calculates the log2-Fold-Change of the end rate ratio
+#' of group_A over that of group_B per set of samples in a STORM object.
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param group_B character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#' @param minCov integer. Minimal coverage in position for metric to be calculated
+#'
+#' @return
+#' @export
+#'
+add_ERlog2FCh <- function(STORM, group_A, group_B, newColName = "auto",
+    onNucs = c("A", "C", "G", "T"), minCov = 50){
+  if(newColName == "auto"){
+    newColName <- paste("ERlog2FCh", group_A, group_B, sep = "_")
+  }
+  sets <- intersect(STORM$META[STORM$META$group == group_A,]$set, STORM$META[STORM$META$group == group_B,]$set)
+  if(length(sets) == 0){
+    warning("No sets found with both ", group_A, " and ", group_B, " group labels.\n",
+            newColName, " was not calculated.")
+    return(STORM)
+  }
+  OUT <- lapply(sets, function(iSet){
+    id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+    id_B <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_B,]$id
+    DT_A <- add_EndRate(STORM$DATA[[id_A]], minCov = minCov)
+    DT_B <- add_EndRate(STORM$DATA[[id_B]], minCov = minCov)
+    tmpRES <- data.table::data.table(log2(DT_A$end_Ratio / DT_B$end_Ratio))
+    tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
+    names(tmpRES) <- c("set", "metric", "score")
+    tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+                                             "txcoor", "pos", "refSeq")], tmpRES)
+    tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
+    return(tmpRES)
+  }) %>% do.call(what = rbind)
+  STORM$RES <- hlpr_add_REScols(STORM$RES, OUT)
+  return(STORM)
+}
+
+
 #' Add Start Ratio Difference
 #'
 #' Calculates the start ratio difference of group_A minus that
@@ -608,6 +697,84 @@ add_DRD <- function(STORM, group_A, group_B, newColName = "auto",
 }
 
 # One group metrics ############################################################
+
+#' Add scoreZ accounting for read-ends (3prime)
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#'
+#' @return
+#' @export
+#'
+#' @examples
+add_scoreZ_3p=function(STORM, group_A, newColName = "auto",
+                       onNucs = c("A", "C", "G", "T"), minMedCov = 30,
+                       flankSize = 6){
+  if(newColName == "auto"){
+    newColName <- paste("scoreZ_3p", group_A, sep = "_")
+  }
+  sets <- STORM$META[STORM$META$group == group_A,]$set
+  if(length(sets) == 0){
+    warning("No sets found with ", group_A, " group label.\n",
+            newColName, " was not calculated.")
+    return(STORM)
+  }
+  OUT <- lapply(sets, function(iSet){
+    id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+    DT_A <- add_scoreZ_3p_util(STORM$DATA[[id_A]], minMedEnv = minMedCov, flankSize = flankSize)
+    #DT_A <- add_scoreA_3p(STORM$DATA[[id_A]], minMedEnv = minMedCov, flankSize = flankSize)
+    tmpRES <- data.table::data.table(DT_A$scoreZ_3p)
+    tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
+    names(tmpRES) <- c("set", "metric", "score")
+    tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+                                             "txcoor", "pos", "refSeq")], tmpRES)
+    tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
+    return(tmpRES)
+  }) %>% do.call(what = rbind)
+  STORM$RES <- hlpr_add_REScols(STORM$RES, OUT)
+  return(STORM)
+}
+
+#' Add end rate 1bp downstream
+#'
+#' @param STORM list. STORM object as output by \code{\link{storm_STORM}}
+#' @param group_A character. Name of group to be compared as found in STORM$META$group
+#' @param newColName character. Name of calculated metric to be stored in STORM$RES,
+#' assigned by default based on group_A and group_B
+#' @param onNucs character. Nucleotide(s) in which the metric will be calculated
+#'
+#' @return
+#' @export
+#'
+#' @examples
+add_ER1bpDS=function(STORM, group_A, newColName = "auto",
+                     onNucs = c("A", "C", "G", "T"), minCov = 50){
+  if(newColName == "auto"){
+    newColName <- paste("ER1bpDS", group_A, sep = "_")
+  }
+  sets <- STORM$META[STORM$META$group == group_A,]$set
+  if(length(sets) == 0){
+    warning("No sets found with ", group_A, " group label.\n",
+            newColName, " was not calculated.")
+    return(STORM)
+  }
+  OUT <- lapply(sets, function(iSet){
+    id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
+    DT_A <- add_EndRate_1bpDS(STORM$DATA[[id_A]], minCov = minCov)
+    tmpRES <- data.table::data.table(DT_A$endRate_1bpDS)
+    tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
+    names(tmpRES) <- c("set", "metric", "score")
+    tmpRES <- data.table::data.table(DT_A[,c("chr", "gencoor", "strand", "gene",
+                                             "txcoor", "pos", "refSeq")], tmpRES)
+    tmpRES[!(tmpRES$refSeq %in% onNucs), "score"] <- NA
+    return(tmpRES)
+  }) %>% do.call(what = rbind)
+  STORM$RES <- hlpr_add_REScols(STORM$RES, OUT)
+  return(STORM)
+}
 
 #' Add Misincorporation Rate
 #'
@@ -1033,4 +1200,39 @@ scale_by_nuc <- function(DT){
         DT$twoOme_score[selPos] <- scale(DT$twoOme_score[selPos])
     }
     return(DT)
+}
+
+# Calculates end rate 1bp downstream
+add_EndRate_1bpDS <- function(DT, minCov = 50){
+  tmp <- (DT$end_3p + 1) / (DT$cov + 1)
+  tmp[DT$cov < minCov] <- NA
+  DTL <- tibble::add_column(DT, endRate_1bpDS = tmp) %>% txtools::tx_split_DT()
+  DT <- lapply(DTL, function(DT){
+    DT$endRate_1bpDS <- c(utils::tail(DT$endRate_1bpDS, -1), NA)
+    DT
+  }) %>% txtools::tx_merge_DT()
+  return(DT)
+}
+
+# Calculates scoreZ
+scoreZ <- function(CHR, d = 6, minMedEnv = 30){
+  score <- rep(NA, length(CHR)); names(score) <- names(CHR)
+  for (P in (d+1):(length(CHR)-d)){
+    ePos <- CHR[P]
+    leftFlank <- CHR[(P-d):(P-1)]
+    rightFlank <- CHR[(P+1):(P+d)]
+    allpos=c(leftFlank,rightFlank)
+    score[P]<-(ePos-mean(allpos))/sd(allpos)
+  }
+  return(score)
+}
+
+# Calculates scoreZ on 3p
+add_scoreZ_3p_util <- function(DT, minMedEnv = 30, nCores = 1, flankSize = 6){
+  DTL <- txtools::tx_split_DT(DT)
+  parallel::mclapply(mc.cores = nCores, DTL, function(x){
+    tmp <- scoreZ(x$end_3p, minMedEnv = minMedEnv, d = flankSize)
+    #tmp <- scoreA(x$end_3p, minMedEnv = minMedEnv, d = flankSize)
+    tibble::add_column(x, scoreZ_3p = tmp)
+  }) %>% txtools::tx_merge_DT()
 }
