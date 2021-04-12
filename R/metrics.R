@@ -139,6 +139,20 @@ add_m3U_metrics <- function(STORM){
         add_MRD("Mock.TGIRT", "AlkBmix.TGIRT")
 }
 
+add_Nm_MgR_metrics <- function(STORM){
+    STORM %>%
+        add_ER1bpDS("MgR") %>%
+        add_ER1bpDS("MgR-OED") %>%
+        add_ER1bpDS("Mock") %>%
+        add_scoreZ_3p("MgR") %>%
+        add_scoreZ_3p("MgR-OED") %>%
+        add_scoreZ_3p("Mock") %>%
+        add_ERlog2FCh("MgR", "Mock") %>%
+        add_ERlog2FCh1bpDS("MgR", "Mock") %>%
+        add_ERlog2FCh("MgR-OED", "Mock") %>%
+        add_ERlog2FCh1bpDS("MgR-OED", "Mock")
+}
+
 # METRIC ASSIGNMENT FUNCTIONS ##################################################
 
 #' Initialize STORM$CALLS
