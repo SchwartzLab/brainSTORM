@@ -777,7 +777,7 @@ add_ER1bpDS=function(STORM, group_A, newColName = "auto",
   }
   OUT <- lapply(sets, function(iSet){
     id_A <- STORM$META[STORM$META$set == iSet & STORM$META$group == group_A,]$id
-    DT_A <- add_EndRate_1bpDS(STORM$DATA[[id_A]], minCov = minCov)
+    DT_A <- add_EndRate1bpDS(STORM$DATA[[id_A]], minCov = minCov)
     tmpRES <- data.table::data.table(DT_A$endRate_1bpDS)
     tmpRES <- data.table::data.table(iSet, newColName, tmpRES)
     names(tmpRES) <- c("set", "metric", "score")
@@ -1217,7 +1217,7 @@ scale_by_nuc <- function(DT){
 }
 
 # Calculates end rate 1bp downstream
-add_EndRate_1bpDS <- function(DT, minCov = 50){
+add_EndRate1bpDS <- function(DT, minCov = 50){
   tmp <- (DT$end_3p + 1) / (DT$cov + 1)
   tmp[DT$cov < minCov] <- NA
   DTL <- tibble::add_column(DT, endRate_1bpDS = tmp) %>% txtools::tx_split_DT()
