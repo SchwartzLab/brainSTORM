@@ -21,7 +21,7 @@
 alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE,
                       nCores = 4, alignEndsType = "Local",
                       outSAMtype = "BAM Unsorted", alignIntronMax = 0, outFilterMultimapNmax = 10,
-                      outDir){
+                      outDir, otherSTARparams = ""){
     mkTmpDir()
     if(!dir.exists(outDir)){dir.create(outDir)}
     if(zipped){rFCom <- "zcat"}else if(!zipped){rFCom <- "cat"}
@@ -47,7 +47,8 @@ alignSTAR <- function(read1Files, STARgenomeDir, pairedEnd = TRUE, zipped = TRUE
                       " --outSAMtype ", outSAMtype,
                       " --outFilterMultimapNmax ", outFilterMultimapNmax,
                       " --alignEndsType ", alignEndsType,
-                      " --alignIntronMax ", alignIntronMax)
+                      " --alignIntronMax ", alignIntronMax, 
+                      otherSTARparams)
         system(com)
     }
     # Alignment Summary Report
